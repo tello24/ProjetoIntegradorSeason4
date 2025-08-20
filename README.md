@@ -22,6 +22,7 @@
 | Pedro Vasconcelos             | 24.00923-7 |
 | Renan Schiavotello            | 24.00202-0 |
 | Wolf Meijome                  | 24.95008-4 |
+| Leonardo Hideshima            | 24.00229-0 |
 
 ---
 
