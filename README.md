@@ -18,10 +18,9 @@
 | Nome Completo                 | RA         |
 | :---------------------------- | :--------- |
 | Eike Barbosa                  | 24.00652-0 |
-| Giovanni Guariglia de Camargo | 23.00136-4 |
+| Nicolas Pessoa                | 24.01746-9 |
 | Pedro Vasconcelos             | 24.00923-7 |
 | Renan Schiavotello            | 24.00202-0 |
-| Matheus Garcia                | 24.00304-2 |
 | Wolf Meijome                  | 24.95008-4 |
 
 ---
