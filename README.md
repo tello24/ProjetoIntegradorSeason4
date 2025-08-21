@@ -75,10 +75,4 @@ Rode flutter clean e depois flutter pub get se ocorrerem erros de cache.
 
 ### 📁 Estrutura do Projeto
 ProjetoIntegradorSeason4/
-│── lib/              # Código principal em Flutter
-│── android/          # Configurações específicas do Android
-│── ios/              # Configurações específicas do iOS
-│── web/              # Configurações específicas para Web (se habilitado)
-│── test/             # Testes automatizados
-│── pubspec.yaml      # Dependências do projeto
-│── README.md         # Este arquivo
+
