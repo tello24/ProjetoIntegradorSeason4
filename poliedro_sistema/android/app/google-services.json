@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "875888400081",
+    "project_id": "pi4semestre-a424d",
+    "storage_bucket": "pi4semestre-a424d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875888400081:android:d6bfa241e197fcedd6d7f0",
+        "android_client_info": {
+          "package_name": "com.example.poliedro_sistema"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB1r7OSvLcJmHy4n95iAH8sEa0SJXIWTyc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
