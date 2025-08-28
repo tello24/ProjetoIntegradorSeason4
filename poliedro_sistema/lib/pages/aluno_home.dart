@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/confirm_signout.dart';
+import 'select_professor_page.dart'; // ← novo: abre seleção de professor
 
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
@@ -84,7 +85,7 @@ class _AlunoHomeState extends State<AlunoHome> {
               _HeaderCard(
                 badgeIcon: Icons.school,
                 badgeText: 'Aluno',
-                name: name.isEmpty ? 'Aluno' : name,
+                name: name.isNotEmpty ? name : 'Aluno',
                 email: email,
               ),
               const SizedBox(height: 16),
@@ -94,6 +95,18 @@ class _AlunoHomeState extends State<AlunoHome> {
                 subtitle: 'Arquivos e links compartilhados com você',
                 leading: const Icon(Icons.folder_copy_outlined),
                 onTap: () => Navigator.pushNamed(context, '/materials'),
+              ),
+              const SizedBox(height: 12),
+
+              // NOVO: Mensagens → Selecionar Professor (suporta + de 1 professor)
+              _SectionCard(
+                title: 'Mensagens',
+                subtitle: 'Conversar com professores',
+                leading: const Icon(Icons.chat_bubble_outline),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SelectProfessorPage()),
+                ),
               ),
             ],
           ),
