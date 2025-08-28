@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+// Tela de turmas
+import 'classes_page.dart';
+
 class ProfHome extends StatefulWidget {
   const ProfHome({super.key});
 
@@ -10,27 +13,6 @@ class ProfHome extends StatefulWidget {
 }
 
 class _ProfHomeState extends State<ProfHome> {
-  Future<Map<String, dynamic>?>? _userFuture;
-
-  @override
-  void initState() {
-    super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      // Se não houver sessão, volta ao login após o primeiro frame
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-      });
-    } else {
-      _userFuture = FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get()
-          .then((d) => d.data());
-    }
-  }
-
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
     if (!mounted) return;
@@ -39,31 +21,43 @@ class _ProfHomeState extends State<ProfHome> {
 
   @override
   Widget build(BuildContext context) {
-    if (_userFuture == null) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      // Sem sessão -> volta pro AuthGate/Login
+      return Scaffold(
+        appBar: AppBar(title: const Text('Área do Professor')),
+        body: Center(
+          child: FilledButton.icon(
+            onPressed: () => Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false),
+            icon: const Icon(Icons.login),
+            label: const Text('Fazer login'),
+          ),
+        ),
+      );
     }
 
-    return FutureBuilder<Map<String, dynamic>?>(
-      future: _userFuture,
+    final uid = user.uid;
+    final email = user.email ?? '';
+
+    return StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+      stream: FirebaseFirestore.instance.collection('users').doc(uid).snapshots(),
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
-
-        final data = snap.data;
-        if (data == null) {
+        if (!snap.hasData || !snap.data!.exists) {
           return _ErrorScaffold(
-            onExit: _logout,
             message:
-                'Perfil não encontrado no Firestore.\nCrie o registro em "users/{uid}" ou refaça o cadastro.',
+                'Perfil não encontrado no Firestore.\nCrie o registro em "users/$uid" ou refaça o cadastro.',
+            onExit: _logout,
           );
         }
 
+        final data = snap.data!.data()!;
         final role = (data['role'] ?? '').toString();
         final name = (data['name'] ?? '').toString();
-        final email = (FirebaseAuth.instance.currentUser?.email ?? '');
 
-        // Sem redirecionar automaticamente no build — exibimos um aviso elegante
         if (role != 'professor') {
           return _WrongRoleScaffold(
             expected: 'professor',
@@ -77,24 +71,68 @@ class _ProfHomeState extends State<ProfHome> {
           appBar: AppBar(
             title: const Text('Área do Professor'),
             actions: [
-              IconButton(onPressed: _logout, icon: const Icon(Icons.logout), tooltip: 'Sair'),
+              IconButton(
+                tooltip: 'Sair',
+                onPressed: _logout,
+                icon: const Icon(Icons.logout),
+              ),
             ],
           ),
           body: Padding(
             padding: const EdgeInsets.all(16),
             child: ListView(
               children: [
-                Text('Bem-vindo(a), ${name.isEmpty ? 'Professor' : name} 👋',
-                    style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(email),
-                const Divider(height: 24),
+                // Cabeçalho
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      child: Text(
+                        (name.isNotEmpty ? name[0] : 'P').toUpperCase(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Bem-vindo(a), ${name.isEmpty ? 'Professor' : name} 👋',
+                              style: Theme.of(context).textTheme.titleMedium),
+                          Text(email, style: Theme.of(context).textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Chip(
+                      avatar: Icon(Icons.school, size: 16),
+                      label: Text('Professor'),
+                    ),
+                  ],
+                ),
+                const Divider(height: 32),
+
+                // Turmas
+                ListTile(
+                  leading: const Icon(Icons.groups_2_outlined),
+                  title: const Text('Turmas'),
+                  subtitle: const Text('Gerencie turmas e alunos (por RA)'),
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const ClassesPage()),
+                    );
+                  },
+                ),
+
+                // Materiais
                 ListTile(
                   leading: const Icon(Icons.upload_file),
                   title: const Text('Materiais da disciplina'),
-                  subtitle: const Text('Upload e organização (em breve)'),
-                  onTap: () {},
+                  subtitle: const Text('Upload, links e compartilhamento por turma/RA'),
+                  onTap: () => Navigator.pushNamed(context, '/materials'),
                 ),
+
+                // Futuro
                 ListTile(
                   leading: const Icon(Icons.grade_outlined),
                   title: const Text('Notas'),
