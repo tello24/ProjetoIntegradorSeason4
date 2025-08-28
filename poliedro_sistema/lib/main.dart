@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:poliedro_sistema/pages/classes_page.dart';
 import 'firebase_options.dart';
 
+import 'pages/materials_page.dart';
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/prof_home.dart';
@@ -31,6 +33,8 @@ class MyApp extends StatelessWidget {
         '/register': (_) => const RegisterPage(),
         '/prof': (_) => ProfHome(),   // sem const para evitar erro se faltar construtor const
         '/aluno': (_) => AlunoHome(),
+        '/materials': (_) => const MaterialsPage(),
+        '/classes': (_) => const ClassesPage(), 
       },
     );
   }
