@@ -89,12 +89,15 @@ class _AlunoHomeState extends State<AlunoHome> {
                 Text(email),
                 if (ra.isNotEmpty) Text('RA: $ra'),
                 const Divider(height: 24),
+
+                // ✅ Materiais: agora navega para /materials
                 ListTile(
                   leading: const Icon(Icons.menu_book_outlined),
                   title: const Text('Materiais'),
-                  subtitle: const Text('Acesse conteúdos do curso (em breve)'),
-                  onTap: () {},
+                  subtitle: const Text('Acesse conteúdos do curso'),
+                  onTap: () => Navigator.pushNamed(context, '/materials'),
                 ),
+
                 ListTile(
                   leading: const Icon(Icons.grade),
                   title: const Text('Minhas Notas'),
