@@ -100,9 +100,33 @@ class _MaterialsPageState extends State<MaterialsPage> {
   }
 
   // ============================================================================
+  //                     CONFIRMAÇÃO DE LOGOUT (apenas ao deslogar)
+  // ============================================================================
+  Future<void> _confirmSignOutAndLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Sair da conta?'),
+        content: const Text('Você será redirecionado para a tela de login.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Sair')),
+        ],
+      ),
+    );
+    if (ok == true) {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+      }
+    }
+  }
+  // Observação: use este método no onPressed do seu botão de logout,
+  // em qualquer tela (ex.: AppBar > IconButton(Icons.logout)).
+
+  // ============================================================================
   //                           SELEÇÃO / CRIAÇÃO DE TURMAS
   // ============================================================================
-
   Future<void> _showNewClassDialog() async {
     final ctrl = TextEditingController();
     bool saving = false;
@@ -282,7 +306,6 @@ class _MaterialsPageState extends State<MaterialsPage> {
   // ============================================================================
   //                                   CRIAÇÃO
   // ============================================================================
-
   Future<void> _saveLink() async {
     final title = _title.text.trim();
     final subject = _subject.text.trim();
@@ -321,6 +344,8 @@ class _MaterialsPageState extends State<MaterialsPage> {
       _title.clear();
       _subject.clear();
       _linkUrl.clear();
+      _selectedClassIds.clear();
+      _selectedClassNames.clear();
       _snack('Link salvo com sucesso!');
     } on FirebaseException catch (e) {
       if (mounted) _snack('Falha: ${e.code} — ${e.message}');
@@ -398,6 +423,8 @@ class _MaterialsPageState extends State<MaterialsPage> {
       if (!mounted) return;
       _title.clear();
       _subject.clear();
+      _selectedClassIds.clear();
+      _selectedClassNames.clear();
       _snack('Arquivo embutido com sucesso!');
     } on FirebaseException catch (e) {
       if (mounted) _snack('Falha: ${e.code} — ${e.message}');
@@ -415,7 +442,6 @@ class _MaterialsPageState extends State<MaterialsPage> {
   // ============================================================================
   //                                   AÇÕES (utilitário legado)
   // ============================================================================
-
   Future<void> _openItem(Map<String, dynamic> data) async {
     // Mantido apenas como utilitário, não é mais chamado no onTap da lista.
     final type = (data['type'] ?? '').toString();
@@ -642,7 +668,6 @@ class _MaterialsPageState extends State<MaterialsPage> {
   // ============================================================================
   //                                   UI
   // ============================================================================
-
   void _snack(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
@@ -937,12 +962,14 @@ class _MaterialsPageState extends State<MaterialsPage> {
                                   title: Text(title),
                                   subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
                                   trailing: const Icon(Icons.arrow_forward_ios_rounded),
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => MaterialDetailsPage(ref: d.reference),
-                                    ),
-                                  ),
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => MaterialDetailsPage(ref: d.reference),
+                                      ),
+                                    );
+                                  },
                                 );
                               },
                             ),
