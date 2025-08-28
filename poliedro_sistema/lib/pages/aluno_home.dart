@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../utils/confirm_signout.dart';
+
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
-
   @override
   State<AlunoHome> createState() => _AlunoHomeState();
 }
@@ -15,25 +16,16 @@ class _AlunoHomeState extends State<AlunoHome> {
   @override
   void initState() {
     super.initState();
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-      });
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) {
+      _userFuture = Future.value(null);
     } else {
       _userFuture = FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
+          .doc(uid)
           .get()
           .then((d) => d.data());
     }
-  }
-
-  Future<void> _logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
   }
 
   @override
@@ -48,27 +40,30 @@ class _AlunoHomeState extends State<AlunoHome> {
         if (snap.connectionState == ConnectionState.waiting) {
           return const Scaffold(body: Center(child: CircularProgressIndicator()));
         }
+        if (snap.hasError) {
+          return _ErrorScaffold(
+            title: 'Área do Aluno',
+            message: 'Erro: ${snap.error}',
+          );
+        }
 
         final data = snap.data;
-        if (data == null) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (data == null || user == null) {
           return _ErrorScaffold(
-            onExit: _logout,
-            message:
-                'Perfil não encontrado no Firestore.\nCrie o registro em "users/{uid}" ou refaça o cadastro.',
+            title: 'Área do Aluno',
+            message: 'Perfil não encontrado no Firestore.\nFaça login novamente.',
           );
         }
 
         final role = (data['role'] ?? '').toString();
-        final name = (data['name'] ?? '').toString();
-        final email = (FirebaseAuth.instance.currentUser?.email ?? '');
-        final ra = (data['ra'] ?? '').toString();
+        final name = (data['name'] ?? 'Aluno').toString();
+        final email = (user.email ?? '');
 
         if (role != 'aluno') {
-          return _WrongRoleScaffold(
-            expected: 'aluno',
-            actual: role,
-            goTo: () => Navigator.pushNamedAndRemoveUntil(context, '/prof', (_) => false),
-            onExit: _logout,
+          return _ErrorScaffold(
+            title: 'Área do Aluno',
+            message: 'Seu perfil não é "aluno". (Perfil atual: "${role.isEmpty ? '—' : role}")',
           );
         }
 
@@ -76,42 +71,31 @@ class _AlunoHomeState extends State<AlunoHome> {
           appBar: AppBar(
             title: const Text('Área do Aluno'),
             actions: [
-              IconButton(onPressed: _logout, icon: const Icon(Icons.logout), tooltip: 'Sair'),
+              IconButton(
+                tooltip: 'Sair',
+                icon: const Icon(Icons.logout),
+                onPressed: () => confirmSignOut(context),
+              ),
             ],
           ),
-          body: Padding(
+          body: ListView(
             padding: const EdgeInsets.all(16),
-            child: ListView(
-              children: [
-                Text('Olá, ${name.isEmpty ? 'Aluno(a)' : name} 👋',
-                    style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
-                Text(email),
-                if (ra.isNotEmpty) Text('RA: $ra'),
-                const Divider(height: 24),
+            children: [
+              _HeaderCard(
+                badgeIcon: Icons.school,
+                badgeText: 'Aluno',
+                name: name.isEmpty ? 'Aluno' : name,
+                email: email,
+              ),
+              const SizedBox(height: 16),
 
-                // ✅ Materiais: agora navega para /materials
-                ListTile(
-                  leading: const Icon(Icons.menu_book_outlined),
-                  title: const Text('Materiais'),
-                  subtitle: const Text('Acesse conteúdos do curso'),
-                  onTap: () => Navigator.pushNamed(context, '/materials'),
-                ),
-
-                ListTile(
-                  leading: const Icon(Icons.grade),
-                  title: const Text('Minhas Notas'),
-                  subtitle: const Text('Visualizar notas lançadas (em breve)'),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading: const Icon(Icons.chat_bubble_outline),
-                  title: const Text('Mensagens'),
-                  subtitle: const Text('Fale com o professor (em breve)'),
-                  onTap: () {},
-                ),
-              ],
-            ),
+              _SectionCard(
+                title: 'Meus materiais',
+                subtitle: 'Arquivos e links compartilhados com você',
+                leading: const Icon(Icons.folder_copy_outlined),
+                onTap: () => Navigator.pushNamed(context, '/materials'),
+              ),
+            ],
           ),
         );
       },
@@ -119,25 +103,48 @@ class _AlunoHomeState extends State<AlunoHome> {
   }
 }
 
-class _ErrorScaffold extends StatelessWidget {
-  final String message;
-  final VoidCallback onExit;
-  const _ErrorScaffold({required this.message, required this.onExit});
+class _HeaderCard extends StatelessWidget {
+  final String name;
+  final String email;
+  final IconData badgeIcon;
+  final String badgeText;
+
+  const _HeaderCard({
+    required this.name,
+    required this.email,
+    required this.badgeIcon,
+    required this.badgeText,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Acesso')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+    return Card(
+      elevation: 1.5,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
           children: [
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onExit,
-              icon: const Icon(Icons.logout),
-              label: const Text('Sair e voltar ao Login'),
+            CircleAvatar(
+              radius: 24,
+              child: Text(name.isNotEmpty ? name.characters.first.toUpperCase() : '?'),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(name, style: Theme.of(context).textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(email, style: Theme.of(context).textTheme.bodySmall),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Chip(
+              avatar: Icon(badgeIcon, size: 16),
+              label: Text(badgeText),
             ),
           ],
         ),
@@ -146,45 +153,57 @@ class _ErrorScaffold extends StatelessWidget {
   }
 }
 
-class _WrongRoleScaffold extends StatelessWidget {
-  final String expected;
-  final String actual;
-  final VoidCallback goTo;
-  final VoidCallback onExit;
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+  final Widget leading;
+  final VoidCallback onTap;
 
-  const _WrongRoleScaffold({
-    required this.expected,
-    required this.actual,
-    required this.goTo,
-    required this.onExit,
+  const _SectionCard({
+    required this.title,
+    this.subtitle,
+    required this.leading,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: ListTile(
+        leading: leading,
+        title: Text(title),
+        subtitle: subtitle == null ? null : Text(subtitle!),
+        trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 18),
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+class _ErrorScaffold extends StatelessWidget {
+  final String title;
+  final String message;
+  _ErrorScaffold({required this.title, required this.message}); // sem const p/ hot reload
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Acesso restrito')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Text(
-              'Este perfil não possui acesso à Área do $expected.\n'
-              '(role atual: "$actual")',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: goTo,
-              icon: const Icon(Icons.arrow_forward),
-              label: Text('Ir para Área do ${expected == 'aluno' ? 'Professor' : 'Aluno'}'),
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: onExit,
-              icon: const Icon(Icons.logout),
-              label: const Text('Sair'),
-            )
-          ],
+      appBar: AppBar(
+        title: Text(title),
+        actions: [
+          IconButton(
+            tooltip: 'Sair',
+            icon: const Icon(Icons.logout),
+            onPressed: () => confirmSignOut(context),
+          ),
+        ],
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(message, textAlign: TextAlign.center),
         ),
       ),
     );
