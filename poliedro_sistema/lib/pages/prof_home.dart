@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/confirm_signout.dart';
 import 'classes_page.dart';
+import 'select_student_page.dart'; // ← novo: abre seleção de aluno
 
 class ProfHome extends StatefulWidget {
   const ProfHome({super.key});
@@ -86,7 +87,7 @@ class _ProfHomeState extends State<ProfHome> {
 
               _SectionCard(
                 title: 'Minhas turmas',
-                subtitle: 'Gerencie turmas e RAs',
+                subtitle: 'Gerenciar turmas e RAs',
                 leading: const Icon(Icons.groups_2_outlined),
                 onTap: () => Navigator.push(
                   context,
@@ -100,6 +101,18 @@ class _ProfHomeState extends State<ProfHome> {
                 subtitle: 'Enviar links/arquivos e compartilhar com turmas',
                 leading: const Icon(Icons.folder_copy_outlined),
                 onTap: () => Navigator.pushNamed(context, '/materials'),
+              ),
+              const SizedBox(height: 12),
+
+              // NOVO: Mensagens → Selecionar Aluno
+              _SectionCard(
+                title: 'Mensagens',
+                subtitle: 'Conversar com um aluno',
+                leading: const Icon(Icons.chat_bubble_outline),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SelectStudentPage()),
+                ),
               ),
             ],
           ),
@@ -141,7 +154,7 @@ class _HeaderCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name, style: Theme.of(context).textTheme.titleMedium),
+                  Text(name.isNotEmpty ? name : 'Professor', style: Theme.of(context).textTheme.titleMedium),
                   const SizedBox(height: 2),
                   Text(email, style: Theme.of(context).textTheme.bodySmall),
                 ],
