@@ -12,6 +12,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../utils/open_inline_io.dart'
   if (dart.library.html) '../utils/open_inline_web.dart';
 
+// Tela de detalhes do material
+import 'material_details.dart';
+
 class MaterialsPage extends StatefulWidget {
   const MaterialsPage({super.key});
   @override
@@ -30,6 +33,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
   final _title = TextEditingController();
   final _subject = TextEditingController();
   final _linkUrl = TextEditingController();
+
+  // --------- busca e filtro ---------
+  final _searchCtrl = TextEditingController();
+  String? _selectedSubject;
 
   // turmas selecionadas para NOVOS materiais
   final List<String> _selectedClassIds = [];
@@ -88,6 +95,7 @@ class _MaterialsPageState extends State<MaterialsPage> {
     _title.dispose();
     _subject.dispose();
     _linkUrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -405,10 +413,11 @@ class _MaterialsPageState extends State<MaterialsPage> {
   }
 
   // ============================================================================
-  //                                   AÇÕES
+  //                                   AÇÕES (utilitário legado)
   // ============================================================================
 
   Future<void> _openItem(Map<String, dynamic> data) async {
+    // Mantido apenas como utilitário, não é mais chamado no onTap da lista.
     final type = (data['type'] ?? '').toString();
 
     if (type == 'link') {
@@ -782,6 +791,20 @@ class _MaterialsPageState extends State<MaterialsPage> {
               ),
             ),
 
+          // ======================= BUSCA + CHIPS =======================
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              controller: _searchCtrl,
+              decoration: InputDecoration(
+                hintText: 'Buscar por título...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+          ),
+
           // Lista de materiais
           Expanded(
             child: _materialsStream == null
@@ -830,77 +853,101 @@ class _MaterialsPageState extends State<MaterialsPage> {
                         return const Center(child: Text('Nenhum material disponível.'));
                       }
 
-                      return ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                        itemCount: docs.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
-                        itemBuilder: (_, i) {
-                          final d = docs[i];
-                          final data = d.data();
-                          final type = (data['type'] ?? '').toString();
-                          final title = (data['title'] ?? 'Sem título').toString();
-                          final subject = (data['subject'] ?? '').toString();
-                          final ownerUid = (data['ownerUid'] ?? '').toString();
-                          final isMine = (_isProfessor == true) && ownerUid == _uid;
+                      // ---------------- Disciplinas distintas ----------------
+                      final subjects = <String>{};
+                      for (final d in docs) {
+                        final subj = (d.data()['subject'] ?? '').toString().trim();
+                        if (subj.isNotEmpty) subjects.add(subj);
+                      }
+                      final subjectsList = subjects.toList()..sort();
 
-                          final classNames =
-                              ((data['classNames'] as List?)?.map((e) => e.toString()).toList() ?? const []);
-                          final classesLine = classNames.isEmpty
-                              ? null
-                              : Text('Turmas: ${classNames.join(", ")}',
-                                  style: Theme.of(context).textTheme.bodySmall);
+                      // ---------------- Filtros client-side ----------------
+                      final term = _searchCtrl.text.trim().toLowerCase();
+                      final filtered = docs.where((d) {
+                        final data = d.data();
+                        final subj = (data['subject'] ?? '').toString();
+                        final title = (data['title'] ?? '').toString().toLowerCase();
 
-                          IconData icon;
-                          String subtitle = subject;
-                          if (type == 'link') {
-                            icon = Icons.link;
-                            if (subtitle.isEmpty) subtitle = (data['url'] ?? '').toString();
-                          } else if (type == 'inline') {
-                            icon = Icons.insert_drive_file;
-                            if (subtitle.isEmpty) {
-                              final name = (data['fileName'] ?? '').toString();
-                              final size = (data['size'] ?? 0) as int;
-                              subtitle = '$name · ${_fmtBytes(size)}';
-                            }
-                          } else {
-                            icon = Icons.help_outline;
-                          }
+                        final subjectOk = _selectedSubject == null || _selectedSubject == subj;
+                        final searchOk = term.isEmpty || title.contains(term);
+                        return subjectOk && searchOk;
+                      }).toList();
 
-                          return ListTile(
-                            leading: Icon(icon),
-                            title: Text(title),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                if (subtitle.isNotEmpty) Text(subtitle),
-                                if (classesLine != null) classesLine,
-                              ],
+                      return Column(
+                        children: [
+                          // Chips de disciplina
+                          if (subjectsList.isNotEmpty)
+                            SizedBox(
+                              height: 46,
+                              child: ListView(
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: ChoiceChip(
+                                      label: const Text('Todas'),
+                                      selected: _selectedSubject == null,
+                                      onSelected: (_) => setState(() => _selectedSubject = null),
+                                    ),
+                                  ),
+                                  ...subjectsList.map((s) => Padding(
+                                        padding: const EdgeInsets.only(right: 8),
+                                        child: ChoiceChip(
+                                          label: Text(s),
+                                          selected: _selectedSubject == s,
+                                          onSelected: (_) => setState(() => _selectedSubject = s),
+                                        ),
+                                      )),
+                                ],
+                              ),
                             ),
-                            onTap: () => _openItem(data),
-                            trailing: isMine
-                                ? Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'Editar turmas',
-                                        icon: const Icon(Icons.groups_2_outlined),
-                                        onPressed: () => _editClassesForMaterial(d),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Editar',
-                                        icon: const Icon(Icons.edit_outlined),
-                                        onPressed: () => _showEditDialog(d),
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Excluir',
-                                        icon: const Icon(Icons.delete_outline),
-                                        onPressed: () => _deleteMaterial(d),
-                                      ),
-                                    ],
-                                  )
-                                : null,
-                          );
-                        },
+
+                          // Lista filtrada
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              itemCount: filtered.length,
+                              separatorBuilder: (_, __) => const Divider(height: 1),
+                              itemBuilder: (_, i) {
+                                final d = filtered[i];
+                                final data = d.data();
+                                final type = (data['type'] ?? '').toString();
+                                final title = (data['title'] ?? 'Sem título').toString();
+                                final subject = (data['subject'] ?? '').toString();
+
+                                IconData icon;
+                                String subtitle = subject;
+                                if (type == 'link') {
+                                  icon = Icons.link;
+                                  if (subtitle.isEmpty) subtitle = (data['url'] ?? '').toString();
+                                } else if (type == 'inline') {
+                                  icon = Icons.insert_drive_file;
+                                  if (subtitle.isEmpty) {
+                                    final name = (data['fileName'] ?? '').toString();
+                                    final size = (data['size'] ?? 0) as int;
+                                    subtitle = '$name · ${_fmtBytes(size)}';
+                                  }
+                                } else {
+                                  icon = Icons.help_outline;
+                                }
+
+                                return ListTile(
+                                  leading: Icon(icon),
+                                  title: Text(title),
+                                  subtitle: subtitle.isNotEmpty ? Text(subtitle) : null,
+                                  trailing: const Icon(Icons.arrow_forward_ios_rounded),
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => MaterialDetailsPage(ref: d.reference),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
