@@ -52,10 +52,8 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
-  // -------- helper: OR progressivo (Filter.or requer >=2 args posicionais) -------
   Filter _orAll(List<Filter> fs) {
     if (fs.isEmpty) {
-      // fallback impossível, mas evita crash em dev:
       return Filter('fromUid', isEqualTo: _myUid);
     }
     if (fs.length == 1) return fs.first;
@@ -70,7 +68,7 @@ class _ChatPageState extends State<ChatPage> {
     final coll = FirebaseFirestore.instance.collection('messages');
     final List<Filter> filters = [];
 
-    // Conversa por UID (sempre disponível)
+    // Conversa por UID
     filters.add(Filter.and(
       Filter('fromUid', isEqualTo: _myUid),
       Filter('toUid', isEqualTo: widget.peerUid),
@@ -80,7 +78,7 @@ class _ChatPageState extends State<ChatPage> {
       Filter('toUid', isEqualTo: _myUid),
     ));
 
-    // Conversa por RA (se ambos tiverem RA configurado)
+    // Conversa por RA
     if ((_myRa != null && _myRa!.isNotEmpty) &&
         (widget.peerRa != null && widget.peerRa!.isNotEmpty)) {
       filters.add(Filter.and(
@@ -113,8 +111,8 @@ class _ChatPageState extends State<ChatPage> {
       await FirebaseFirestore.instance.collection('messages').add({
         'fromUid': _myUid,
         'toUid': widget.peerUid,
-        'fromRa': _myRa,               // pode ser null
-        'toRa': widget.peerRa,         // pode ser null
+        'fromRa': _myRa,
+        'toRa': widget.peerRa,
         'text': text,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -159,6 +157,15 @@ class _ChatPageState extends State<ChatPage> {
     return '$hh:$mm';
   }
 
+  String _fmtDate(Timestamp? ts) {
+    if (ts == null) return '';
+    final dt = ts.toDate();
+    final day = dt.day.toString().padLeft(2, '0');
+    final month = dt.month.toString().padLeft(2, '0');
+    final year = dt.year;
+    return '$day/$month/$year';
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_messagesStream == null) {
@@ -190,6 +197,7 @@ class _ChatPageState extends State<ChatPage> {
                   return const Center(child: Text('Sem mensagens ainda.'));
                 }
 
+                String lastDate = '';
                 return ListView.builder(
                   controller: _listCtrl,
                   reverse: true,
@@ -200,35 +208,53 @@ class _ChatPageState extends State<ChatPage> {
                     final mine = (d['fromUid'] ?? '') == _myUid;
                     final text = (d['text'] ?? '').toString();
                     final time = _fmtTime(d['createdAt'] as Timestamp?);
+                    final date = _fmtDate(d['createdAt'] as Timestamp?);
 
-                    return Align(
-                      alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                      child: Container(
-                        constraints: const BoxConstraints(maxWidth: 360),
-                        margin: const EdgeInsets.symmetric(vertical: 4),
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: mine
-                              ? Theme.of(context).colorScheme.primaryContainer
-                              : Theme.of(context).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Column(
-                          crossAxisAlignment:
-                              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                          children: [
-                            Text(text, style: Theme.of(context).textTheme.bodyMedium),
-                            const SizedBox(height: 4),
-                            Text(
-                              time,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(color: Theme.of(context).hintColor),
+                    final isNewDate = date != lastDate;
+                    lastDate = date;
+
+                    return Column(
+                      children: [
+                        if (isNewDate)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 8.0),
+                            child: Text(
+                              date,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).hintColor),
                             ),
-                          ],
+                          ),
+                        Align(
+                          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
+                          child: Container(
+                            constraints: const BoxConstraints(maxWidth: 360),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: mine
+                                  ? Theme.of(context).colorScheme.primaryContainer
+                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Column(
+                              crossAxisAlignment:
+                                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                              children: [
+                                Text(text, style: Theme.of(context).textTheme.bodyMedium),
+                                const SizedBox(height: 4),
+                                Text(
+                                  time,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .labelSmall
+                                      ?.copyWith(color: Theme.of(context).hintColor),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     );
                   },
                 );
