@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/confirm_signout.dart';
-import 'select_professor_page.dart'; // ← novo: abre seleção de professor
+import 'select_professor_page.dart'; // ← você já tinha
+import 'select_class_for_grades_page.dart'; // ← NOVO
 
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
@@ -98,7 +99,6 @@ class _AlunoHomeState extends State<AlunoHome> {
               ),
               const SizedBox(height: 12),
 
-              // NOVO: Mensagens → Selecionar Professor (suporta + de 1 professor)
               _SectionCard(
                 title: 'Mensagens',
                 subtitle: 'Conversar com professores',
@@ -106,6 +106,18 @@ class _AlunoHomeState extends State<AlunoHome> {
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const SelectProfessorPage()),
+                ),
+              ),
+              const SizedBox(height: 12),
+
+              // ✅ NOVO: Notas por matéria (seleciona a turma e vê as notas dessa matéria)
+              _SectionCard(
+                title: 'Notas por matéria',
+                subtitle: 'Veja suas notas por cada turma',
+                leading: const Icon(Icons.fact_check_outlined),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SelectClassForGradesPage()),
                 ),
               ),
             ],
@@ -198,7 +210,7 @@ class _SectionCard extends StatelessWidget {
 class _ErrorScaffold extends StatelessWidget {
   final String title;
   final String message;
-  _ErrorScaffold({required this.title, required this.message}); // sem const p/ hot reload
+  const _ErrorScaffold({required this.title, required this.message});
 
   @override
   Widget build(BuildContext context) {
