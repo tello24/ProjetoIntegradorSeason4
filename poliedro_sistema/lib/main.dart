@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'firebase_options.dart';
 
-// Páginas
+// Páginas do projeto
 import 'pages/login_page.dart';
 import 'pages/register_page.dart';
 import 'pages/prof_home.dart';
