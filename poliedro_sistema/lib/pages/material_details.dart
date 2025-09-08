@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -20,142 +22,244 @@ class _MaterialDetailsPageState extends State<MaterialDetailsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalhes do material')),
-      body: StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
-        stream: widget.ref.snapshots(),
-        builder: (context, snap) {
-          if (snap.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snap.hasError) {
-            return Center(child: Text('Erro: ${snap.error}'));
-          }
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leadingWidth: 136,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+          child: SizedBox(
+            width: 136,
+            child: _BackPill(onTap: () => Navigator.maybePop(context)),
+          ),
+        ),
+        actions: [
+          IconButton(
+            tooltip: 'Sair',
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+              }
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          const _Bg(),
 
-          final doc = snap.data;
-          if (doc == null || !doc.exists) {
-            return const Center(child: Text('Material não encontrado.'));
-          }
+          StreamBuilder<DocumentSnapshot<Map<String, dynamic>>>(
+            stream: widget.ref.snapshots(),
+            builder: (context, snap) {
+              if (snap.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (snap.hasError) {
+                return Center(child: Text('Erro: ${snap.error}', style: const TextStyle(color: Colors.white)));
+              }
 
-          final data = doc.data()!;
-          final type = (data['type'] ?? '').toString(); // "link" | "inline"
-          final title = (data['title'] ?? 'Sem título').toString();
-          final subject = (data['subject'] ?? '').toString();
-          final ownerEmail = (data['ownerEmail'] ?? '').toString();
-          final ownerUid = (data['ownerUid'] ?? '').toString();
-          final fileName = (data['fileName'] ?? '').toString();
-          final size = (data['size'] ?? 0) as int;
-          final url = (data['url'] ?? '').toString();
-          final classNames = ((data['classNames'] as List?)?.map((e) => e.toString()).toList() ?? const []);
-          final createdAt = data['createdAt'];
-          final dateStr = _fmtDate(createdAt);
+              final doc = snap.data;
+              if (doc == null || !doc.exists) {
+                return const Center(child: Text('Material não encontrado.', style: TextStyle(color: Colors.white70)));
+              }
 
-          final currentUid = FirebaseAuth.instance.currentUser?.uid;
-          final isMine = currentUid != null && currentUid == ownerUid;
+              final data = doc.data()!;
+              final type = (data['type'] ?? '').toString(); // "link" | "inline"
+              final title = (data['title'] ?? 'Sem título').toString();
+              final subject = (data['subject'] ?? '').toString();
+              final ownerEmail = (data['ownerEmail'] ?? '').toString();
+              final ownerUid = (data['ownerUid'] ?? '').toString();
+              final fileName = (data['fileName'] ?? '').toString();
+              final size = (data['size'] ?? 0) as int;
+              final classNames = ((data['classNames'] as List?)?.map((e) => e.toString()).toList() ?? const []);
+              final createdAt = data['createdAt'];
+              final dateStr = _fmtDate(createdAt);
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Título
-                Text(title, style: Theme.of(context).textTheme.headlineSmall),
-                const SizedBox(height: 8),
+              final currentUid = FirebaseAuth.instance.currentUser?.uid;
+              final isMine = currentUid != null && currentUid == ownerUid;
 
-                // Sub-infos
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    if (subject.isNotEmpty)
-                      _InfoChip(icon: Icons.menu_book_outlined, label: 'Disciplina: $subject'),
-                    _InfoChip(
-                      icon: Icons.person_outline,
-                      label: ownerEmail.isEmpty ? 'Professor: —' : 'Professor: $ownerEmail',
-                    ),
-                    if (dateStr != null)
-                      _InfoChip(icon: Icons.event_outlined, label: 'Data: $dateStr'),
-                    _InfoChip(
-                      icon: type == 'link' ? Icons.link : Icons.insert_drive_file,
-                      label: 'Tipo: $type',
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                if (classNames.isNotEmpty) ...[
-                  Text('Turmas', style: Theme.of(context).textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      for (final n in classNames)
-                        Chip(avatar: const Icon(Icons.class_outlined, size: 16), label: Text(n)),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // Se for arquivo embutido, mostrar nome e tamanho
-                if (type == 'inline') ...[
-                  _KeyValue('Arquivo', fileName.isEmpty ? '—' : fileName),
-                  _KeyValue('Tamanho', _fmtBytes(size)),
-                  const SizedBox(height: 16),
-                ],
-
-                // Ações principais
-                Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        icon: const Icon(Icons.open_in_new),
-                        label: Text(type == 'link' ? 'Abrir link' : 'Abrir arquivo'),
-                        onPressed: () => _open(context, data),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Ações do professor dono
-                if (isMine) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.edit_outlined),
-                          label: const Text('Editar'),
-                          onPressed: () => _showEditDialog(data),
+              return SafeArea(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1200),
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
+                      children: [
+                        // Cabeçalho
+                        _Glass(
+                          radius: 18,
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .titleLarge
+                                    ?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  if (subject.isNotEmpty)
+                                    _Pill(icon: Icons.menu_book_outlined, label: 'Disciplina: $subject'),
+                                  _Pill(
+                                    icon: Icons.person_outline,
+                                    label: ownerEmail.isEmpty ? 'Professor: —' : 'Professor: $ownerEmail',
+                                  ),
+                                  if (dateStr != null) _Pill(icon: Icons.event_outlined, label: 'Data: $dateStr'),
+                                  _Pill(
+                                    icon: type == 'link' ? Icons.link : Icons.insert_drive_file,
+                                    label: 'Tipo: $type',
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(Icons.groups_2_outlined),
-                          label: const Text('Editar turmas'),
-                          onPressed: () => _editClassesForMaterial(data),
+                        const SizedBox(height: 12),
+
+                        // Turmas (contraste ok)
+                        _Glass(
+                          radius: 18,
+                          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Turmas',
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      )),
+                              const SizedBox(height: 10),
+                              if (classNames.isEmpty)
+                                const Text('Nenhuma turma vinculada.',
+                                    style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic))
+                              else
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: [for (final n in classNames) _Tag(label: n)],
+                                ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton.icon(
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Excluir material'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                      ),
-                      onPressed: _deleteMaterial,
+                        const SizedBox(height: 12),
+
+                        // Info do arquivo
+                        if (type == 'inline') ...[
+                          _Glass(
+                            radius: 18,
+                            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                            child: Column(
+                              children: [
+                                _KVRow(k: 'Arquivo', v: fileName.isEmpty ? '—' : fileName),
+                                const SizedBox(height: 6),
+                                _KVRow(k: 'Tamanho', v: _fmtBytes(size)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // Ação principal
+                        _Glass(
+                          radius: 18,
+                          padding: const EdgeInsets.all(8),
+                          child: SizedBox(
+                            height: 48,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _open(context, data),
+                              icon: const Icon(Icons.open_in_new),
+                              label: Text(type == 'link' ? 'Abrir link' : 'Abrir arquivo'),
+                              style: ElevatedButton.styleFrom(
+                                textStyle:
+                                    const TextStyle(fontWeight: FontWeight.w700, letterSpacing: .2, fontSize: 16),
+                                backgroundColor: const Color(0xFF6C4FE9),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        // Ações do professor
+                        if (isMine) ...[
+                          const SizedBox(height: 12),
+                          _Glass(
+                            radius: 18,
+                            padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        icon: const Icon(Icons.edit_outlined),
+                                        label: const Text('Editar'),
+                                        onPressed: () => _showEditDialog(data),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          side: const BorderSide(color: Colors.white24),
+                                          textStyle: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: .2,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: OutlinedButton.icon(
+                                        icon: const Icon(Icons.groups_2_outlined),
+                                        label: const Text('Editar turmas'),
+                                        onPressed: () => _editClassesForMaterial(data),
+                                        style: OutlinedButton.styleFrom(
+                                          foregroundColor: Colors.white,
+                                          side: const BorderSide(color: Colors.white24),
+                                          textStyle: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            letterSpacing: .2,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Center(
+                                  child: TextButton.icon(
+                                    onPressed: _deleteMaterial,
+                                    icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+                                    label: const Text('Excluir material',
+                                        style: TextStyle(
+                                          color: Colors.redAccent,
+                                          fontWeight: FontWeight.w700,
+                                        )),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                ],
-              ],
-            ),
-          );
-        },
+                ),
+              );
+            },
+          ),
+        ],
       ),
     );
   }
@@ -488,33 +592,162 @@ class _MaterialDetailsPageState extends State<MaterialDetailsPage> {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoChip({required this.icon, required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Chip(
-      avatar: Icon(icon, size: 18),
-      label: Text(label),
-    );
-  }
-}
+/* ========================= UI helpers ========================= */
 
-class _KeyValue extends StatelessWidget {
-  final String k;
-  final String v;
-  const _KeyValue(this.k, this.v);
+class _BackPill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackPill({required this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        children: [
-          SizedBox(width: 120, child: Text(k, style: const TextStyle(fontWeight: FontWeight.w600))),
-          Expanded(child: Text(v)),
-        ],
+    // Mesmo estilo padronizado (igual ao usado nas outras telas)
+    return ElevatedButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+      label: const Text('Voltar'),
+      style: ElevatedButton.styleFrom(
+        foregroundColor: Colors.white,
+        backgroundColor: Colors.white.withOpacity(.12),
+        elevation: 0,
+        side: const BorderSide(color: Colors.white24),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
 }
+
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _Pill({required this.icon, required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon, size: 16, color: Colors.white),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  final String label;
+  const _Tag({required this.label});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.class_outlined, size: 16, color: Colors.white),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      ]),
+    );
+  }
+}
+
+class _KVRow extends StatelessWidget {
+  final String k;
+  final String v;
+  const _KVRow({required this.k, required this.v});
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        SizedBox(
+          width: 120,
+          child: Text(k,
+              style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700, letterSpacing: .2)),
+        ),
+        Expanded(child: Text(v, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
+      ],
+    );
+  }
+}
+
+class _Glass extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double radius;
+  const _Glass({required this.child, this.padding, this.radius = 16});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF121022).withOpacity(.10),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: Colors.white.withOpacity(.10)),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+class _Bg extends StatelessWidget {
+  const _Bg();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            image: const DecorationImage(
+              image: AssetImage('assets/images/poliedro.png'),
+              fit: BoxFit.cover,
+            ),
+            gradient: LinearGradient(
+              colors: [const Color(0xFF0B091B).withOpacity(.88), const Color(0xFF0B091B).withOpacity(.88)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        Center(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.12,
+              child: Image.asset(
+                'assets/images/iconePoliedro.png',
+                width: _watermarkSize(context),
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _watermarkSize(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    if (w < 640) return (w * 1.15).clamp(420.0, 760.0);
+    if (w < 1000) return (w * 0.82).clamp(520.0, 780.0);
+    return (w * 0.55).clamp(700.0, 900.0);
+  }
+}
+
