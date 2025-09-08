@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +54,8 @@ class _ChatPageState extends State<ChatPage> {
     });
   }
 
+  // ---------------------- Query helpers (inalterados) ----------------------
+
   Filter _orAll(List<Filter> fs) {
     if (fs.isEmpty) {
       return Filter('fromUid', isEqualTo: _myUid);
@@ -101,6 +105,8 @@ class _ChatPageState extends State<ChatPage> {
     _listCtrl.dispose();
     super.dispose();
   }
+
+  // ---------------------- Envio (inalterado) ----------------------
 
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
@@ -166,6 +172,8 @@ class _ChatPageState extends State<ChatPage> {
     return '$day/$month/$year';
   }
 
+  // ---------------------- UI ----------------------
+
   @override
   Widget build(BuildContext context) {
     if (_messagesStream == null) {
@@ -173,125 +181,331 @@ class _ChatPageState extends State<ChatPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(_title())),
-      body: Column(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leadingWidth: 136,
+        leading: Padding(
+          padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+          child: SizedBox(
+            width: 136,
+            child: _BackPill(onTap: () => Navigator.maybePop(context)),
+          ),
+        ),
+        title: Text(_title(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        centerTitle: false,
+        actions: [
+          IconButton(
+            tooltip: 'Sair',
+            icon: const Icon(Icons.logout, color: Colors.white),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              if (mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+              }
+            },
+          ),
+        ],
+      ),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          Expanded(
-            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
-              stream: _messagesStream,
-              builder: (context, snap) {
-                if (snap.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snap.hasError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text('Erro: ${snap.error}', textAlign: TextAlign.center),
-                    ),
-                  );
-                }
+          const _Bg(),
 
-                final docs = snap.data?.docs ?? [];
-                if (docs.isEmpty) {
-                  return const Center(child: Text('Sem mensagens ainda.'));
-                }
+          Column(
+            children: [
+              const SizedBox(height: kToolbarHeight + 6),
 
-                String lastDate = '';
-                return ListView.builder(
-                  controller: _listCtrl,
-                  reverse: true,
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-                  itemCount: docs.length,
-                  itemBuilder: (_, i) {
-                    final d = docs[i].data();
-                    final mine = (d['fromUid'] ?? '') == _myUid;
-                    final text = (d['text'] ?? '').toString();
-                    final time = _fmtTime(d['createdAt'] as Timestamp?);
-                    final date = _fmtDate(d['createdAt'] as Timestamp?);
-
-                    final isNewDate = date != lastDate;
-                    lastDate = date;
-
-                    return Column(
-                      children: [
-                        if (isNewDate)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 8.0),
-                            child: Text(
-                              date,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).hintColor),
-                            ),
-                          ),
-                        Align(
-                          alignment: mine ? Alignment.centerRight : Alignment.centerLeft,
-                          child: Container(
-                            constraints: const BoxConstraints(maxWidth: 360),
-                            margin: const EdgeInsets.symmetric(vertical: 4),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            decoration: BoxDecoration(
-                              color: mine
-                                  ? Theme.of(context).colorScheme.primaryContainer
-                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Column(
-                              crossAxisAlignment:
-                                  mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-                              children: [
-                                Text(text, style: Theme.of(context).textTheme.bodyMedium),
-                                const SizedBox(height: 4),
-                                Text(
-                                  time,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .labelSmall
-                                      ?.copyWith(color: Theme.of(context).hintColor),
-                                ),
-                              ],
-                            ),
-                          ),
+              // Lista de mensagens
+              Expanded(
+                child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                  stream: _messagesStream,
+                  builder: (context, snap) {
+                    if (snap.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snap.hasError) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text('Erro: ${snap.error}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white)),
                         ),
-                      ],
+                      );
+                    }
+
+                    final docs = snap.data?.docs ?? [];
+                    if (docs.isEmpty) {
+                      return const Center(
+                        child: Text('Sem mensagens ainda.',
+                            style: TextStyle(color: Colors.white70)),
+                      );
+                    }
+
+                    String lastDate = '';
+                    return ListView.builder(
+                      controller: _listCtrl,
+                      reverse: true,
+                      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+                      itemCount: docs.length,
+                      itemBuilder: (_, i) {
+                        final d = docs[i].data();
+                        final mine = (d['fromUid'] ?? '') == _myUid;
+                        final text = (d['text'] ?? '').toString();
+                        final time = _fmtTime(d['createdAt'] as Timestamp?);
+                        final date = _fmtDate(d['createdAt'] as Timestamp?);
+
+                        final isNewDate = date != lastDate;
+                        lastDate = date;
+
+                        return Column(
+                          crossAxisAlignment:
+                              mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                          children: [
+                            if (isNewDate && date.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                child: Center(child: _DatePill(text: date)),
+                              ),
+                            Align(
+                              alignment:
+                                  mine ? Alignment.centerRight : Alignment.centerLeft,
+                              child: _MessageBubble(
+                                mine: mine,
+                                text: text,
+                                time: time,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
                     );
                   },
-                );
-              },
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _msgCtrl,
-                      minLines: 1,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        hintText: 'Escreva uma mensagem...',
-                        border: OutlineInputBorder(),
-                        isDense: true,
-                      ),
-                      onSubmitted: (_) => _sendMessage(),
+                ),
+              ),
+
+              // Caixa de digitação
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 12),
+                  child: _Glass(
+                    radius: 16,
+                    padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _msgCtrl,
+                            minLines: 1,
+                            maxLines: 4,
+                            style: const TextStyle(color: Colors.white),
+                            decoration: _decDark('Escreva uma mensagem...'),
+                            onSubmitted: (_) => _sendMessage(),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        FilledButton.icon(
+                          onPressed: _sending ? null : _sendMessage,
+                          icon: const Icon(Icons.send_rounded, size: 18),
+                          label: const Text('Enviar'),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton.icon(
-                    onPressed: _sending ? null : _sendMessage,
-                    icon: const Icon(Icons.send_rounded, size: 18),
-                    label: const Text('Enviar'),
-                  ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),
     );
+  }
+}
+
+/* ========================= UI helpers/pieces ========================= */
+
+class _MessageBubble extends StatelessWidget {
+  final bool mine;
+  final String text;
+  final String time;
+  const _MessageBubble({required this.mine, required this.text, required this.time});
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = mine
+        ? null
+        : const Color(0xFF121022).withOpacity(.10);
+
+    final gradient = mine
+        ? const LinearGradient(colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)])
+        : null;
+
+    final txtColor = mine ? Colors.white : Colors.white;
+    final timeColor = mine ? Colors.white70 : Colors.white70;
+
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 360),
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: bg,
+        gradient: gradient,
+        borderRadius: BorderRadius.only(
+          topLeft: const Radius.circular(16),
+          topRight: const Radius.circular(16),
+          bottomLeft: Radius.circular(mine ? 16 : 6),
+          bottomRight: Radius.circular(mine ? 6 : 16),
+        ),
+        border: Border.all(color: Colors.white.withOpacity(.08)),
+        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 18, offset: Offset(0, 10))],
+      ),
+      child: Column(
+        crossAxisAlignment:
+            mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Text(text,
+              style: TextStyle(color: txtColor, height: 1.25, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 4),
+          Text(time, style: TextStyle(color: timeColor, fontSize: 11)),
+        ],
+      ),
+    );
+  }
+}
+
+class _DatePill extends StatelessWidget {
+  final String text;
+  const _DatePill({required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.10),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.white24),
+      ),
+      child: Text(text,
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+class _BackPill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackPill({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+      label: const Text('Voltar',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(.10),
+        side: const BorderSide(color: Colors.white24),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      ),
+    );
+  }
+}
+
+class _Glass extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final double radius;
+  const _Glass({required this.child, this.padding, this.radius = 16});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(radius),
+      child: BackdropFilter(
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        child: Container(
+          padding: padding ?? const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF121022).withOpacity(.10),
+            borderRadius: BorderRadius.circular(radius),
+            border: Border.all(color: Colors.white.withOpacity(.10)),
+            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))],
+          ),
+          child: child,
+        ),
+      ),
+    );
+  }
+}
+
+InputDecoration _decDark(String hint) {
+  return InputDecoration(
+    hintText: hint,
+    hintStyle: const TextStyle(color: Colors.white60),
+    filled: true,
+    fillColor: Colors.white.withOpacity(.06),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.white24),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.white24),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.white54),
+    ),
+  );
+}
+
+class _Bg extends StatelessWidget {
+  const _Bg();
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            image: const DecorationImage(
+              image: AssetImage('assets/images/poliedro.png'),
+              fit: BoxFit.cover,
+            ),
+            gradient: LinearGradient(
+              colors: [const Color(0xFF0B091B).withOpacity(.88), const Color(0xFF0B091B).withOpacity(.88)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        Center(
+          child: IgnorePointer(
+            child: Opacity(
+              opacity: 0.12,
+              child: Image.asset(
+                'assets/images/iconePoliedro.png',
+                width: _watermarkSize(context),
+                fit: BoxFit.contain,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  double _watermarkSize(BuildContext context) {
+    final w = MediaQuery.of(context).size.width;
+    if (w < 640) return (w * 1.15).clamp(420.0, 760.0);
+    if (w < 1000) return (w * 0.82).clamp(520.0, 780.0);
+    return (w * 0.55).clamp(700.0, 900.0);
   }
 }
