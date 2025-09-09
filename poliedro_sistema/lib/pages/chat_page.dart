@@ -5,10 +5,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class ChatPage extends StatefulWidget {
-  final String peerUid;      // UID do outro usuário
+  final String peerUid;
   final String? peerName;
   final String? peerEmail;
-  final String? peerRa;      // RA do aluno (opcional)
+  final String? peerRa;
 
   const ChatPage({
     super.key,
@@ -32,6 +32,8 @@ class _ChatPageState extends State<ChatPage> {
   Stream<QuerySnapshot<Map<String, dynamic>>>? _messagesStream;
   bool _sending = false;
 
+  DateTime? _lastMarkRun;
+
   @override
   void initState() {
     super.initState();
@@ -46,20 +48,18 @@ class _ChatPageState extends State<ChatPage> {
     }
     _myUid = u.uid;
 
-    // carrega meu RA (se eu for aluno) e depois monta a stream
     FirebaseFirestore.instance.collection('users').doc(_myUid).get().then((doc) {
       _myRa = (doc.data()?['ra'] ?? '').toString().trim();
       _messagesStream = _buildQuery().snapshots();
       if (mounted) setState(() {});
+      // marca como lidas após montar
+      WidgetsBinding.instance.addPostFrameCallback((_) => _markIncomingAsRead());
     });
   }
 
-  // ---------------------- Query helpers (inalterados) ----------------------
-
+  // --------- helpers de consulta ----------
   Filter _orAll(List<Filter> fs) {
-    if (fs.isEmpty) {
-      return Filter('fromUid', isEqualTo: _myUid);
-    }
+    if (fs.isEmpty) return Filter('fromUid', isEqualTo: _myUid);
     if (fs.length == 1) return fs.first;
     var acc = Filter.or(fs[0], fs[1]);
     for (var i = 2; i < fs.length; i++) {
@@ -72,7 +72,7 @@ class _ChatPageState extends State<ChatPage> {
     final coll = FirebaseFirestore.instance.collection('messages');
     final List<Filter> filters = [];
 
-    // Conversa por UID
+    // por UID
     filters.add(Filter.and(
       Filter('fromUid', isEqualTo: _myUid),
       Filter('toUid', isEqualTo: widget.peerUid),
@@ -82,7 +82,7 @@ class _ChatPageState extends State<ChatPage> {
       Filter('toUid', isEqualTo: _myUid),
     ));
 
-    // Conversa por RA
+    // por RA (se ambos tiverem RA)
     if ((_myRa != null && _myRa!.isNotEmpty) &&
         (widget.peerRa != null && widget.peerRa!.isNotEmpty)) {
       filters.add(Filter.and(
@@ -106,8 +106,40 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
-  // ---------------------- Envio (inalterado) ----------------------
+  // --------- marcar recebidas como lidas ----------
+  Future<void> _markIncomingAsRead() async {
+    final now = DateTime.now();
+    if (_lastMarkRun != null &&
+        now.difference(_lastMarkRun!) < const Duration(seconds: 1)) {
+      return;
+    }
+    _lastMarkRun = now;
 
+    try {
+      final q = FirebaseFirestore.instance
+          .collection('messages')
+          .where('fromUid', isEqualTo: widget.peerUid)
+          .where('toUid', isEqualTo: _myUid)
+          .where('read', isEqualTo: false)
+          .limit(200);
+
+      final snap = await q.get();
+      if (snap.docs.isEmpty) return;
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (final doc in snap.docs) {
+        batch.update(doc.reference, {
+          'read': true,
+          'readAt': FieldValue.serverTimestamp(),
+        });
+      }
+      await batch.commit();
+    } catch (_) {
+      // silencioso
+    }
+  }
+
+  // --------- envio ----------
   Future<void> _sendMessage() async {
     final text = _msgCtrl.text.trim();
     if (text.isEmpty || _sending) return;
@@ -121,6 +153,7 @@ class _ChatPageState extends State<ChatPage> {
         'toRa': widget.peerRa,
         'text': text,
         'createdAt': FieldValue.serverTimestamp(),
+        'read': false, // 👈 novo
       });
 
       _msgCtrl.clear();
@@ -172,8 +205,7 @@ class _ChatPageState extends State<ChatPage> {
     return '$day/$month/$year';
   }
 
-  // ---------------------- UI ----------------------
-
+  // --------- UI ----------
   @override
   Widget build(BuildContext context) {
     if (_messagesStream == null) {
@@ -194,7 +226,8 @@ class _ChatPageState extends State<ChatPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        title: Text(_title(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text(_title(),
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         centerTitle: false,
         actions: [
           IconButton(
@@ -218,7 +251,6 @@ class _ChatPageState extends State<ChatPage> {
             children: [
               const SizedBox(height: kToolbarHeight + 6),
 
-              // Lista de mensagens
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: _messagesStream,
@@ -235,6 +267,11 @@ class _ChatPageState extends State<ChatPage> {
                               style: const TextStyle(color: Colors.white)),
                         ),
                       );
+                    }
+
+                    // marca como lidas quando dados chegam
+                    if (snap.hasData) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) => _markIncomingAsRead());
                     }
 
                     final docs = snap.data?.docs ?? [];
@@ -287,7 +324,6 @@ class _ChatPageState extends State<ChatPage> {
                 ),
               ),
 
-              // Caixa de digitação
               SafeArea(
                 top: false,
                 child: Padding(
@@ -336,16 +372,12 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bg = mine
-        ? null
-        : const Color(0xFF121022).withOpacity(.10);
+    final Color? bg = mine ? null : const Color(0xFF121022).withOpacity(.10);
+    final Gradient? gradient =
+        mine ? const LinearGradient(colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)]) : null;
 
-    final gradient = mine
-        ? const LinearGradient(colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)])
-        : null;
-
-    final txtColor = mine ? Colors.white : Colors.white;
-    final timeColor = mine ? Colors.white70 : Colors.white70;
+    final Color txtColor = Colors.white;
+    final Color timeColor = Colors.white70;
 
     return Container(
       constraints: const BoxConstraints(maxWidth: 360),
@@ -364,8 +396,7 @@ class _MessageBubble extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 18, offset: Offset(0, 10))],
       ),
       child: Column(
-        crossAxisAlignment:
-            mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
           Text(text,
               style: TextStyle(color: txtColor, height: 1.25, fontWeight: FontWeight.w600)),
@@ -380,6 +411,7 @@ class _MessageBubble extends StatelessWidget {
 class _DatePill extends StatelessWidget {
   final String text;
   const _DatePill({required this.text});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -389,12 +421,19 @@ class _DatePill extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.white24),
       ),
-      child: Text(text,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
 
+
+// Fix for _DatePill text (wrap DefaultTextStyle above is inconvenient). Simpler:
 class _BackPill extends StatelessWidget {
   final VoidCallback onTap;
   const _BackPill({required this.onTap});
