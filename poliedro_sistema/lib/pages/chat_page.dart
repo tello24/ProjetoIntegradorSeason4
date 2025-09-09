@@ -116,23 +116,40 @@ class _ChatPageState extends State<ChatPage> {
     _lastMarkRun = now;
 
     try {
-      final q = FirebaseFirestore.instance
+      final batch = FirebaseFirestore.instance.batch();
+
+      // Conversa por UID
+      final qUid = FirebaseFirestore.instance
           .collection('messages')
           .where('fromUid', isEqualTo: widget.peerUid)
           .where('toUid', isEqualTo: _myUid)
           .where('read', isEqualTo: false)
-          .limit(200);
-
-      final snap = await q.get();
-      if (snap.docs.isEmpty) return;
-
-      final batch = FirebaseFirestore.instance.batch();
-      for (final doc in snap.docs) {
+          .limit(500);
+      final sUid = await qUid.get();
+      for (final doc in sUid.docs) {
         batch.update(doc.reference, {
           'read': true,
           'readAt': FieldValue.serverTimestamp(),
         });
       }
+
+      // Conversa por RA (se aplicável)
+      if ((_myRa?.isNotEmpty ?? false) && (widget.peerRa?.isNotEmpty ?? false)) {
+        final qRa = FirebaseFirestore.instance
+            .collection('messages')
+            .where('fromRa', isEqualTo: widget.peerRa)
+            .where('toRa', isEqualTo: _myRa)
+            .where('read', isEqualTo: false)
+            .limit(500);
+        final sRa = await qRa.get();
+        for (final doc in sRa.docs) {
+          batch.update(doc.reference, {
+            'read': true,
+            'readAt': FieldValue.serverTimestamp(),
+          });
+        }
+      }
+
       await batch.commit();
     } catch (_) {
       // silencioso
@@ -153,7 +170,7 @@ class _ChatPageState extends State<ChatPage> {
         'toRa': widget.peerRa,
         'text': text,
         'createdAt': FieldValue.serverTimestamp(),
-        'read': false, // 👈 novo
+        'read': false, // 👈 flag de leitura
       });
 
       _msgCtrl.clear();
@@ -226,8 +243,10 @@ class _ChatPageState extends State<ChatPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        title: Text(_title(),
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: Text(
+          _title(),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
         centerTitle: false,
         actions: [
           IconButton(
@@ -262,23 +281,28 @@ class _ChatPageState extends State<ChatPage> {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Erro: ${snap.error}',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Erro: ${snap.error}',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       );
                     }
 
                     // marca como lidas quando dados chegam
                     if (snap.hasData) {
-                      WidgetsBinding.instance.addPostFrameCallback((_) => _markIncomingAsRead());
+                      WidgetsBinding.instance
+                          .addPostFrameCallback((_) => _markIncomingAsRead());
                     }
 
                     final docs = snap.data?.docs ?? [];
                     if (docs.isEmpty) {
                       return const Center(
-                        child: Text('Sem mensagens ainda.',
-                            style: TextStyle(color: Colors.white70)),
+                        child: Text(
+                          'Sem mensagens ainda.',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       );
                     }
 
@@ -294,6 +318,7 @@ class _ChatPageState extends State<ChatPage> {
                         final text = (d['text'] ?? '').toString();
                         final time = _fmtTime(d['createdAt'] as Timestamp?);
                         final date = _fmtDate(d['createdAt'] as Timestamp?);
+                        final read = (d['read'] ?? false) == true;
 
                         final isNewDate = date != lastDate;
                         lastDate = date;
@@ -314,6 +339,7 @@ class _ChatPageState extends State<ChatPage> {
                                 mine: mine,
                                 text: text,
                                 time: time,
+                                read: read, // 👈 novo
                               ),
                             ),
                           ],
@@ -368,7 +394,13 @@ class _MessageBubble extends StatelessWidget {
   final bool mine;
   final String text;
   final String time;
-  const _MessageBubble({required this.mine, required this.text, required this.time});
+  final bool read; // 👈 novo
+  const _MessageBubble({
+    required this.mine,
+    required this.text,
+    required this.time,
+    required this.read,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -398,10 +430,26 @@ class _MessageBubble extends StatelessWidget {
       child: Column(
         crossAxisAlignment: mine ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Text(text,
-              style: TextStyle(color: txtColor, height: 1.25, fontWeight: FontWeight.w600)),
+          Text(
+            text,
+            style: TextStyle(color: txtColor, height: 1.25, fontWeight: FontWeight.w600),
+          ),
           const SizedBox(height: 4),
-          Text(time, style: TextStyle(color: timeColor, fontSize: 11)),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: mine ? MainAxisAlignment.end : MainAxisAlignment.start,
+            children: [
+              Text(time, style: TextStyle(color: timeColor, fontSize: 11)),
+              if (mine) ...[
+                const SizedBox(width: 6),
+                Icon(
+                  read ? Icons.done_all_rounded : Icons.check_rounded,
+                  size: 14,
+                  color: read ? Colors.white : Colors.white70,
+                ),
+              ],
+            ],
+          ),
         ],
       ),
     );
@@ -433,7 +481,6 @@ class _DatePill extends StatelessWidget {
 }
 
 
-// Fix for _DatePill text (wrap DefaultTextStyle above is inconvenient). Simpler:
 class _BackPill extends StatelessWidget {
   final VoidCallback onTap;
   const _BackPill({required this.onTap});
