@@ -1,5 +1,6 @@
-import 'dart:io';
-import 'dart:ui' as ui; // <- para BackdropFilter.blur
+// lib/pages/classes_page.dart
+import 'dart:ui' as ui; // para BackdropFilter.blur
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -113,7 +114,7 @@ class _ClassesPageState extends State<ClassesPage> {
   Future<void> _manageStudents(String classId) async {
     final raCtrl = TextEditingController();
 
-    // carrega RAs atuais
+    // RAs atuais da turma
     final current = await FirebaseFirestore.instance
         .collection('classes')
         .doc(classId)
@@ -123,78 +124,214 @@ class _ClassesPageState extends State<ClassesPage> {
 
     await showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDlg) => AlertDialog(
-          backgroundColor: const Color(0xFF151331),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Alunos da turma (RAs)',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Campo para digitar RA — fundo escuro e texto branco
-              TextField(
-                controller: raCtrl,
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                  LengthLimitingTextInputFormatter(7),
-                ],
-                style: const TextStyle(color: Colors.white),
-                decoration: _decDark('Adicionar RA (7 dígitos)', icon: Icons.badge_outlined),
-                onSubmitted: (_) async => _addRa(classId, raCtrl, ras, setDlg),
-              ),
-              const SizedBox(height: 12),
+      builder: (dialogCtx) {
+        // Estado local do diálogo (fora do StatefulBuilder, para persistir entre rebuilds do builder)
+        List<String> suggestions = [];
+        Timer? deb;
 
-              // Lista de RAs — chips escuros (nada de branco)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final ra in ras)
-                      _RaChip(
-                        text: ra,
-                        onDelete: () async {
-                          try {
-                            await FirebaseFirestore.instance
-                                .collection('classes')
-                                .doc(classId)
-                                .collection('students')
-                                .doc(ra)
-                                .delete();
-                            setDlg(() => ras.remove(ra));
-                            _snack('RA $ra removido.');
-                          } on FirebaseException catch (e) {
-                            _snack('Falha: ${e.code} — ${e.message}');
-                          }
-                        },
+        // Fallback: baixa um lote de users e filtra por prefixo no cliente — retorna lista.
+        Future<List<String>> _fallbackPrefix(String prefix) async {
+          try {
+            final snap2 = await FirebaseFirestore.instance
+                .collection('users')
+                .where('role', isEqualTo: 'aluno')
+                .limit(80) // lote pequeno
+                .get();
+
+            final lp = prefix.toLowerCase();
+            final list2 = snap2.docs
+                .map((d) => (d.data()['ra'] ?? '').toString())
+                .where((ra) {
+                  final s = ra.toLowerCase();
+                  return s.isNotEmpty && s.startsWith(lp) && !ras.contains(ra);
+                })
+                .toSet()
+                .toList()
+              ..sort();
+
+            return list2;
+          } catch (_) {
+            return <String>[];
+          }
+        }
+
+        // Autocomplete principal: tenta índice (role + orderBy('ra')); se vazio/erro -> fallback.
+        Future<void> _lookup(
+          String prefix,
+          void Function(void Function()) setDlg,
+        ) async {
+          final p = prefix.trim();
+
+          // zera sugestões assim que começa a digitar
+          setDlg(() => suggestions = []);
+          if (p.isEmpty) return;
+
+          // debounce
+          deb?.cancel();
+          deb = Timer(const Duration(milliseconds: 220), () async {
+            try {
+              final snap = await FirebaseFirestore.instance
+                  .collection('users')
+                  .where('role', isEqualTo: 'aluno')
+                  .orderBy('ra')
+                  .startAt([p])
+                  .endAt([p + '\uf8ff'])
+                  .limit(10)
+                  .get();
+
+              final list = snap.docs
+                  .map((d) => (d.data()['ra'] ?? '').toString())
+                  .where((ra) => ra.isNotEmpty && !ras.contains(ra))
+                  .toSet()
+                  .toList()
+                ..sort();
+
+              if (dialogCtx.mounted) {
+                setDlg(() => suggestions = list);
+              }
+
+              if (list.isEmpty) {
+                final list2 = await _fallbackPrefix(p);
+                if (dialogCtx.mounted) {
+                  setDlg(() => suggestions = list2);
+                }
+              }
+            } catch (_) {
+              // Sem índice tipos mistos -> fallback
+              final list2 = await _fallbackPrefix(p);
+              if (dialogCtx.mounted) {
+                setDlg(() => suggestions = list2);
+                if (list2.isNotEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Usando busca simples. Crie o índice composto (users: role Asc + ra Asc) para acelerar.',
                       ),
-                  ],
-                ),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              }
+            }
+          });
+        }
+
+        void _disposeDebounce() {
+          deb?.cancel();
+          deb = null;
+        }
+
+        return StatefulBuilder(
+          builder: (ctx, setDlg) => WillPopScope(
+            onWillPop: () async {
+              _disposeDebounce();
+              return true;
+            },
+            child: AlertDialog(
+              backgroundColor: const Color(0xFF151331),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text(
+                'Alunos da turma (RAs)',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
               ),
-              if (ras.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Nenhum RA cadastrado ainda.',
-                    style: TextStyle(color: Colors.white54),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Campo RA + autocomplete por prefixo
+                  TextField(
+                    controller: raCtrl,
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(7),
+                    ],
+                    style: const TextStyle(color: Colors.white),
+                    decoration:
+                        _decDark('Adicionar RA (7 dígitos)', icon: Icons.badge_outlined),
+                    onChanged: (v) => _lookup(v, setDlg),
+                    onSubmitted: (_) async => _addRa(classId, raCtrl, ras, setDlg),
                   ),
+
+                  if (suggestions.isNotEmpty) ...[
+                    const SizedBox(height: 10),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final s in suggestions)
+                            GestureDetector(
+                              onTap: () {
+                                raCtrl.text = s;
+                                setDlg(() => suggestions = []);
+                              },
+                              child: _RaSuggestionChip(text: s),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  const SizedBox(height: 12),
+
+                  // RAs já cadastrados
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final ra in ras)
+                          _RaChip(
+                            text: ra,
+                            onDelete: () async {
+                              try {
+                                await FirebaseFirestore.instance
+                                    .collection('classes')
+                                    .doc(classId)
+                                    .collection('students')
+                                    .doc(ra)
+                                    .delete();
+                                setDlg(() => ras.remove(ra));
+                                _snack('RA $ra removido.');
+                              } on FirebaseException catch (e) {
+                                _snack('Falha: ${e.code} — ${e.message}');
+                              }
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (ras.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Nenhum RA cadastrado ainda.',
+                        style: TextStyle(color: Colors.white54),
+                      ),
+                    ),
+                ],
+              ),
+              actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    _disposeDebounce();
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Fechar'),
                 ),
-            ],
-          ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Fechar')),
-            FilledButton.icon(
-              icon: const Icon(Icons.person_add_alt_1),
-              label: const Text('Adicionar RA'),
-              onPressed: () async => _addRa(classId, raCtrl, ras, setDlg),
+                FilledButton.icon(
+                  icon: const Icon(Icons.person_add_alt_1),
+                  label: const Text('Adicionar RA'),
+                  onPressed: () async => _addRa(classId, raCtrl, ras, setDlg),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -210,12 +347,19 @@ class _ClassesPageState extends State<ClassesPage> {
       return;
     }
     try {
-      await FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId)
+      final classRef =
+          FirebaseFirestore.instance.collection('classes').doc(classId);
+
+      // subcoleção: classes/{classId}/students/{ra}
+      await classRef
           .collection('students')
-          .doc(ra) // o id do doc é o RA
-          .set({'addedAt': FieldValue.serverTimestamp()}, SetOptions(merge: true));
+          .doc(ra)
+          .set({'addedAt': FieldValue.serverTimestamp(), 'ra': ra},
+              SetOptions(merge: true));
+
+      // array studentRAs na turma (útil para queries do aluno)
+      await classRef.update({'studentRAs': FieldValue.arrayUnion([ra])});
+
       setDlg(() {
         if (!ras.contains(ra)) ras.add(ra);
         ras.sort();
@@ -306,7 +450,8 @@ class _ClassesPageState extends State<ClassesPage> {
                       child: TextField(
                         controller: _nameCtrl,
                         style: const TextStyle(color: Colors.white),
-                        decoration: _decDark('Nome da turma (ex.: 3ºB Matemática)', icon: Icons.class_outlined),
+                        decoration: _decDark('Nome da turma (ex.: 3ºB Matemática)',
+                            icon: Icons.class_outlined),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -331,14 +476,16 @@ class _ClassesPageState extends State<ClassesPage> {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Erro: ${snap.error}', style: const TextStyle(color: Colors.white)),
+                          child: Text('Erro: ${snap.error}',
+                              style: const TextStyle(color: Colors.white)),
                         ),
                       );
                     }
                     final docs = snap.data?.docs ?? [];
                     if (docs.isEmpty) {
                       return const Center(
-                        child: Text('Nenhuma turma ainda.', style: TextStyle(color: Colors.white70)),
+                        child: Text('Nenhuma turma ainda.',
+                            style: TextStyle(color: Colors.white70)),
                       );
                     }
 
@@ -354,7 +501,8 @@ class _ClassesPageState extends State<ClassesPage> {
                         return _Glass(
                           radius: 16,
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 12),
                             leading: Container(
                               width: 38,
                               height: 38,
@@ -364,16 +512,19 @@ class _ClassesPageState extends State<ClassesPage> {
                                   colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
                                 ),
                               ),
-                              child: const Icon(Icons.folder_open, color: Colors.white),
+                              child:
+                                  const Icon(Icons.folder_open, color: Colors.white),
                             ),
                             title: Text(name.isEmpty ? '(sem nome)' : name,
                                 style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('id: ${d.id}', style: const TextStyle(color: Colors.white54)),
+                            subtitle: Text('id: ${d.id}',
+                                style: const TextStyle(color: Colors.white54)),
                             onTap: () => _manageStudents(d.id),
                             trailing: PopupMenuButton<String>(
                               color: const Color(0xFF1A1830),
                               surfaceTintColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                               elevation: 6,
                               offset: const Offset(0, 8),
                               icon: const Icon(Icons.more_vert, color: Colors.white70),
@@ -389,11 +540,14 @@ class _ClassesPageState extends State<ClassesPage> {
                               itemBuilder: (ctx) => const [
                                 PopupMenuItem(
                                   value: 'rename',
-                                  child: _MenuTile(icon: Icons.edit_outlined, label: 'Renomear'),
+                                  child: _MenuTile(
+                                      icon: Icons.edit_outlined, label: 'Renomear'),
                                 ),
                                 PopupMenuItem(
                                   value: 'addra',
-                                  child: _MenuTile(icon: Icons.person_add_alt_1, label: 'Adicionar RA'),
+                                  child: _MenuTile(
+                                      icon: Icons.person_add_alt_1,
+                                      label: 'Adicionar RA'),
                                 ),
                                 PopupMenuDivider(),
                                 PopupMenuItem(
@@ -456,7 +610,8 @@ class _BackPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+      icon:
+          const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
       label: const Text('Voltar',
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       style: TextButton.styleFrom(
@@ -484,11 +639,39 @@ class _RaChip extends StatelessWidget {
         border: Border.all(color: Colors.white24),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+        Text(text,
+            style:
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         const SizedBox(width: 8),
         GestureDetector(
           onTap: onDelete,
           child: const Icon(Icons.close_rounded, size: 16, color: Colors.white70),
+        ),
+      ]),
+    );
+  }
+}
+
+class _RaSuggestionChip extends StatelessWidget {
+  final String text;
+  const _RaSuggestionChip({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white30),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.search, size: 14, color: Colors.white70),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style:
+              const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
         ),
       ]),
     );
@@ -527,14 +710,16 @@ class _Glass extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(radius),
       child: BackdropFilter(
-        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16), // <- usa ui.ImageFilter
+        filter: ui.ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           padding: padding ?? const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: const Color(0xFF121022).withOpacity(.10),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))],
+            boxShadow: const [
+              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))
+            ],
           ),
           child: child,
         ),
@@ -558,7 +743,10 @@ class _Bg extends StatelessWidget {
               fit: BoxFit.cover,
             ),
             gradient: LinearGradient(
-              colors: [const Color(0xFF0B091B).withOpacity(.88), const Color(0xFF0B091B).withOpacity(.88)],
+              colors: [
+                const Color(0xFF0B091B).withOpacity(.88),
+                const Color(0xFF0B091B).withOpacity(.88)
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
