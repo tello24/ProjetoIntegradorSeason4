@@ -12,34 +12,42 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   // Controllers
-  final name     = TextEditingController();
+  final name = TextEditingController();
   final emailUsr = TextEditingController(); // apenas a parte antes do @
-  final pass     = TextEditingController();
-  final pass2    = TextEditingController();
-  final ra       = TextEditingController();
+  final pass = TextEditingController();
+  final pass2 = TextEditingController();
+  final ra = TextEditingController();
 
   // Focus (erros só após blur/submit)
-  final _nameF  = FocusNode();
+  final _nameF = FocusNode();
   final _emailF = FocusNode();
-  final _passF  = FocusNode();
+  final _passF = FocusNode();
   final _pass2F = FocusNode();
-  final _raF    = FocusNode();
+  final _raF = FocusNode();
 
   bool loading = false;
   String? erro;
-  bool showPass  = false;
+  bool showPass = false;
   bool showPass2 = false;
 
   // Flags de erro
-  bool _tName=false,_tEmail=false,_tPass=false,_tPass2=false,_tRa=false,_submitted=false;
+  bool _tName = false,
+      _tEmail = false,
+      _tPass = false,
+      _tPass2 = false,
+      _tRa = false,
+      _submitted = false;
 
   // Papel selecionado (UI + validação)
   String role = 'aluno'; // 'aluno' | 'professor'
 
   // Domínios
-  static const alunoDomain     = '@p4ed.com';
-  static const profDomainMain  = '@sistemapoliedro.com';
-  static const profDomainsAll  = ['@sistemapoliedro.com', '@sistemapoliedro.com']; // mantido se quiser usar depois
+  static const alunoDomain = '@p4ed.com';
+  static const profDomainMain = '@sistemapoliedro.com';
+  static const profDomainsAll = [
+    '@sistemapoliedro.com',
+    '@sistemapoliedro.com',
+  ]; // mantido se quiser usar depois
 
   bool raEmUso = false;
 
@@ -54,13 +62,13 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool get _emailUserOk => RegExp(r'^[^\s@]+$').hasMatch(emailUsr.text.trim());
   bool get isAluno => role == 'aluno';
-  bool get isProf  => role == 'professor';
+  bool get isProf => role == 'professor';
 
   // ---------- Validações ----------
-  bool get nameValido   => name.text.trim().length >= 2;
-  bool get passValida   => pass.text.trim().length >= 6;
-  bool get passConfere  => pass.text == pass2.text;
-  bool get raValido     => !isAluno || RegExp(r'^\d{7}$').hasMatch(ra.text.trim());
+  bool get nameValido => name.text.trim().length >= 2;
+  bool get passValida => pass.text.trim().length >= 6;
+  bool get passConfere => pass.text == pass2.text;
+  bool get raValido => !isAluno || RegExp(r'^\d{7}$').hasMatch(ra.text.trim());
 
   String? get nameError {
     final show = ((_tName && !_nameF.hasFocus) || _submitted);
@@ -72,7 +80,8 @@ class _RegisterPageState extends State<RegisterPage> {
   String? get emailError {
     final show = ((_tEmail && !_emailF.hasFocus) || _submitted);
     if (!show) return null;
-    if (emailUsr.text.trim().isEmpty) return 'Informe o nome do e-mail institucional';
+    if (emailUsr.text.trim().isEmpty)
+      return 'Informe o nome do e-mail institucional';
     if (!_emailUserOk) return 'Caracteres inválidos no e-mail';
     return null;
   }
@@ -95,14 +104,16 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!isAluno) return null;
     final show = ((_tRa && !_raF.hasFocus) || _submitted);
     if (!show) return null;
-    if (!RegExp(r'^\d{7}$').hasMatch(ra.text.trim())) return 'RA deve ter 7 dígitos';
+    if (!RegExp(r'^\d{7}$').hasMatch(ra.text.trim()))
+      return 'RA deve ter 7 dígitos';
     if (raEmUso) return 'Este RA já está cadastrado para outro aluno.';
     return null;
   }
 
   // CTA habilita sem depender das flags visuais
   bool get ctaEnabled {
-    final base = nameValido && _emailUserOk && passValida && passConfere && !loading;
+    final base =
+        nameValido && _emailUserOk && passValida && passConfere && !loading;
     if (isAluno) {
       return base && RegExp(r'^\d{7}$').hasMatch(ra.text.trim()) && !raEmUso;
     }
@@ -112,27 +123,50 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   void initState() {
     super.initState();
-    _nameF.addListener(()  { if (!_nameF.hasFocus)  setState(() => _tName  = true); });
-    _emailF.addListener(() { if (!_emailF.hasFocus) setState(() => _tEmail = true); });
-    _passF.addListener(()  { if (!_passF.hasFocus)  setState(() => _tPass  = true); });
-    _pass2F.addListener(() { if (!_pass2F.hasFocus) setState(() => _tPass2 = true); });
-    _raF.addListener(()    { if (!_raF.hasFocus)    setState(() => _tRa    = true); });
+    _nameF.addListener(() {
+      if (!_nameF.hasFocus) setState(() => _tName = true);
+    });
+    _emailF.addListener(() {
+      if (!_emailF.hasFocus) setState(() => _tEmail = true);
+    });
+    _passF.addListener(() {
+      if (!_passF.hasFocus) setState(() => _tPass = true);
+    });
+    _pass2F.addListener(() {
+      if (!_pass2F.hasFocus) setState(() => _tPass2 = true);
+    });
+    _raF.addListener(() {
+      if (!_raF.hasFocus) setState(() => _tRa = true);
+    });
   }
 
   @override
   void dispose() {
-    _nameF.dispose(); _emailF.dispose(); _passF.dispose(); _pass2F.dispose(); _raF.dispose();
-    name.dispose(); emailUsr.dispose(); pass.dispose(); pass2.dispose(); ra.dispose();
+    _nameF.dispose();
+    _emailF.dispose();
+    _passF.dispose();
+    _pass2F.dispose();
+    _raF.dispose();
+    name.dispose();
+    emailUsr.dispose();
+    pass.dispose();
+    pass2.dispose();
+    ra.dispose();
     super.dispose();
   }
 
   String _authErrorPt(FirebaseAuthException e) {
     switch (e.code) {
-      case 'email-already-in-use':   return 'Este e-mail já está em uso.';
-      case 'invalid-email':          return 'E-mail inválido.';
-      case 'weak-password':          return 'Senha fraca (mínimo 6 caracteres).';
-      case 'network-request-failed': return 'Falha de rede. Verifique sua conexão.';
-      default: return e.message ?? 'Falha ao cadastrar.';
+      case 'email-already-in-use':
+        return 'Este e-mail já está em uso.';
+      case 'invalid-email':
+        return 'E-mail inválido.';
+      case 'weak-password':
+        return 'Senha fraca (mínimo 6 caracteres).';
+      case 'network-request-failed':
+        return 'Falha de rede. Verifique sua conexão.';
+      default:
+        return e.message ?? 'Falha ao cadastrar.';
     }
   }
 
@@ -159,7 +193,9 @@ class _RegisterPageState extends State<RegisterPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: selected ? Colors.white.withOpacity(.14) : Colors.white.withOpacity(.06),
+            color: selected
+                ? Colors.white.withOpacity(.14)
+                : Colors.white.withOpacity(.06),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected ? Colors.white60 : Colors.white10,
@@ -217,15 +253,18 @@ class _RegisterPageState extends State<RegisterPage> {
       };
       if (role == 'aluno') data['ra'] = ra.text.trim();
 
-      await FirebaseFirestore.instance.collection('users').doc(createdUid).set(
-        data, SetOptions(merge: true),
-      );
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(createdUid)
+          .set(data, SetOptions(merge: true));
 
       // 3) Redireciona
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(
-        context, role == 'professor' ? '/prof' : '/aluno', (_) => false);
-
+        context,
+        role == 'professor' ? '/prof' : '/aluno',
+        (_) => false,
+      );
     } on FirebaseAuthException catch (e) {
       setState(() => erro = _authErrorPt(e));
     } catch (e) {
@@ -252,7 +291,10 @@ class _RegisterPageState extends State<RegisterPage> {
       prefixIcon: prefixIcon,
       suffixIcon: suffixIcon,
       suffixText: suffixText,
-      suffixStyle: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w600),
+      suffixStyle: const TextStyle(
+        color: Colors.white70,
+        fontWeight: FontWeight.w600,
+      ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -292,10 +334,13 @@ class _RegisterPageState extends State<RegisterPage> {
             decoration: BoxDecoration(
               image: const DecorationImage(
                 image: AssetImage('assets/images/poliedro.png'),
-                fit: BoxFit.cover
+                fit: BoxFit.cover,
               ),
               gradient: LinearGradient(
-                colors: [const Color(0xFF0B091B).withOpacity(.92), const Color(0xFF0B091B).withOpacity(.92)],
+                colors: [
+                  const Color(0xFF0B091B).withOpacity(.92),
+                  const Color(0xFF0B091B).withOpacity(.92),
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -313,12 +358,23 @@ class _RegisterPageState extends State<RegisterPage> {
                     filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
                     child: Container(
                       width: 480,
-                      padding: const EdgeInsets.fromLTRB(22, 12, 22, 16), // topo bem justo
+                      padding: const EdgeInsets.fromLTRB(
+                        22,
+                        12,
+                        22,
+                        16,
+                      ), // topo bem justo
                       decoration: BoxDecoration(
                         color: const Color(0xFF121022).withOpacity(.60),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: Colors.white10),
-                        boxShadow: const [BoxShadow(color: Colors.black38, blurRadius: 30, offset: Offset(0,16))],
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Colors.black38,
+                            blurRadius: 30,
+                            offset: Offset(0, 16),
+                          ),
+                        ],
                       ),
                       child: ListView(
                         shrinkWrap: true,
@@ -328,10 +384,20 @@ class _RegisterPageState extends State<RegisterPage> {
                             alignment: Alignment.centerLeft,
                             child: TextButton.icon(
                               onPressed: () => Navigator.pop(context),
-                              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 18),
-                              label: const Text('Voltar', style: TextStyle(color: Colors.white)),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 18,
+                              ),
+                              label: const Text(
+                                'Voltar',
+                                style: TextStyle(color: Colors.white),
+                              ),
                               style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 4,
+                                ),
                                 minimumSize: const Size(0, 0),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
@@ -344,11 +410,19 @@ class _RegisterPageState extends State<RegisterPage> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.person_add_alt_1, color: Colors.white, size: 20),
+                              Icon(
+                                Icons.person_add_alt_1,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                               SizedBox(width: 8),
                               Text(
                                 'Criar conta',
-                                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w700),
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ],
                           ),
@@ -356,16 +430,27 @@ class _RegisterPageState extends State<RegisterPage> {
                           const Text(
                             'Preencha seus dados institucionais para criar a conta.',
                             textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.white70, fontSize: 12),
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                            ),
                           ),
                           const SizedBox(height: 16),
 
                           // Papel: Sou aluno / Sou professor
                           Row(
                             children: [
-                              _roleButton('aluno', Icons.school_outlined, 'Sou aluno'),
+                              _roleButton(
+                                'aluno',
+                                Icons.school_outlined,
+                                'Sou aluno',
+                              ),
                               const SizedBox(width: 10),
-                              _roleButton('professor', Icons.work_outline, 'Sou professor'),
+                              _roleButton(
+                                'professor',
+                                Icons.work_outline,
+                                'Sou professor',
+                              ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -380,7 +465,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: _dec(
                               hint: 'Nome completo',
                               errorText: nameError,
-                              prefixIcon: const Icon(Icons.badge_outlined, color: Colors.white70),
+                              prefixIcon: const Icon(
+                                Icons.badge_outlined,
+                                color: Colors.white70,
+                              ),
                             ),
                             onChanged: (_) => setState(() {}),
                           ),
@@ -398,7 +486,10 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: _dec(
                               hint: 'seu nome',
                               errorText: emailError,
-                              prefixIcon: const Icon(Icons.email_outlined, color: Colors.white70),
+                              prefixIcon: const Icon(
+                                Icons.email_outlined,
+                                color: Colors.white70,
+                              ),
                               suffixText: _domainForRole, // mostra o @ fixo
                             ),
                             onChanged: (_) => setState(() {}),
@@ -417,12 +508,23 @@ class _RegisterPageState extends State<RegisterPage> {
                             decoration: _dec(
                               hint: 'Crie uma senha',
                               errorText: passError,
-                              prefixIcon: const Icon(Icons.lock_outline, color: Colors.white70),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline,
+                                color: Colors.white70,
+                              ),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => showPass = !showPass),
-                                icon: Icon(showPass ? Icons.visibility_off : Icons.visibility,
-                                    color: Colors.white70, size: 18),
-                                tooltip: showPass ? 'Ocultar senha' : 'Mostrar senha',
+                                onPressed: () =>
+                                    setState(() => showPass = !showPass),
+                                icon: Icon(
+                                  showPass
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
+                                tooltip: showPass
+                                    ? 'Ocultar senha'
+                                    : 'Mostrar senha',
                               ),
                             ),
                             onChanged: (_) => setState(() {}),
@@ -437,16 +539,29 @@ class _RegisterPageState extends State<RegisterPage> {
                             autocorrect: false,
                             enableSuggestions: false,
                             obscureText: !showPass2,
-                            textInputAction: isAluno ? TextInputAction.next : TextInputAction.done,
+                            textInputAction: isAluno
+                                ? TextInputAction.next
+                                : TextInputAction.done,
                             decoration: _dec(
                               hint: 'Repita a senha',
                               errorText: pass2Error,
-                              prefixIcon: const Icon(Icons.lock_person_outlined, color: Colors.white70),
+                              prefixIcon: const Icon(
+                                Icons.lock_person_outlined,
+                                color: Colors.white70,
+                              ),
                               suffixIcon: IconButton(
-                                onPressed: () => setState(() => showPass2 = !showPass2),
-                                icon: Icon(showPass2 ? Icons.visibility_off : Icons.visibility,
-                                    color: Colors.white70, size: 18),
-                                tooltip: showPass2 ? 'Ocultar senha' : 'Mostrar senha',
+                                onPressed: () =>
+                                    setState(() => showPass2 = !showPass2),
+                                icon: Icon(
+                                  showPass2
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                  color: Colors.white70,
+                                  size: 18,
+                                ),
+                                tooltip: showPass2
+                                    ? 'Ocultar senha'
+                                    : 'Mostrar senha',
                               ),
                             ),
                             onChanged: (_) => setState(() {}),
@@ -458,14 +573,22 @@ class _RegisterPageState extends State<RegisterPage> {
                             TextField(
                               controller: ra,
                               focusNode: _raF,
-                              style: const TextStyle(color: Colors.white, letterSpacing: 3),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                letterSpacing: 3,
+                              ),
                               keyboardType: TextInputType.number,
                               maxLength: 7,
-                              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                              inputFormatters: [
+                                FilteringTextInputFormatter.digitsOnly,
+                              ],
                               decoration: _dec(
                                 hint: '0000000',
                                 errorText: raError,
-                                prefixIcon: const Icon(Icons.confirmation_number_outlined, color: Colors.white70),
+                                prefixIcon: const Icon(
+                                  Icons.confirmation_number_outlined,
+                                  color: Colors.white70,
+                                ),
                               ).copyWith(counterText: ''),
                               onChanged: (_) {
                                 if (raEmUso) setState(() => raEmUso = false);
@@ -476,7 +599,10 @@ class _RegisterPageState extends State<RegisterPage> {
 
                           const SizedBox(height: 12),
                           if (erro != null)
-                            Text(erro!, style: const TextStyle(color: Colors.redAccent)),
+                            Text(
+                              erro!,
+                              style: const TextStyle(color: Colors.redAccent),
+                            ),
                           const SizedBox(height: 12),
 
                           // ===== Botão CRIAR CONTA: apagado -> acende quando válido =====
@@ -484,35 +610,56 @@ class _RegisterPageState extends State<RegisterPage> {
                             width: double.infinity,
                             child: ElevatedButton(
                               onPressed: ctaOn ? _registrar : null,
-                              style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.black45,
-                                elevation: ctaOn ? 6 : 0,
-                              ).copyWith(
-                                foregroundColor: WidgetStateProperty.all(Colors.white),
-                              ),
+                              style:
+                                  ElevatedButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 14,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.black45,
+                                    elevation: ctaOn ? 6 : 0,
+                                  ).copyWith(
+                                    foregroundColor: WidgetStateProperty.all(
+                                      Colors.white,
+                                    ),
+                                  ),
                               child: AnimatedOpacity(
                                 duration: const Duration(milliseconds: 180),
                                 opacity: ctaOn ? 1.0 : 0.42,
                                 child: Ink(
                                   decoration: BoxDecoration(
                                     gradient: const LinearGradient(
-                                      colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)], // azul -> roxo
+                                      colors: [
+                                        Color(0xFF3E5FBF),
+                                        Color(0xFF7A45C8),
+                                      ], // azul -> roxo
                                     ),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Container(
                                     alignment: Alignment.center,
-                                    constraints: const BoxConstraints(minHeight: 45),
+                                    constraints: const BoxConstraints(
+                                      minHeight: 45,
+                                    ),
                                     child: loading
                                         ? const SizedBox(
-                                            width: 20, height: 20,
-                                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                            width: 20,
+                                            height: 20,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
                                         : const Text(
                                             'Criar conta',
-                                            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 16,
+                                            ),
                                           ),
                                   ),
                                 ),

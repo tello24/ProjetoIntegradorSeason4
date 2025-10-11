@@ -35,10 +35,15 @@ class _SelectStudentPageState extends State<SelectStudentPage> {
         leadingWidth: 136,
         leading: Padding(
           padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
-          child: SizedBox(width: 136, child: _BackPill(onTap: () => Navigator.maybePop(context))),
+          child: SizedBox(
+            width: 136,
+            child: _BackPill(onTap: () => Navigator.maybePop(context)),
+          ),
         ),
-        title: const Text('Selecionar aluno',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+        title: const Text(
+          'Selecionar aluno',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+        ),
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -50,9 +55,13 @@ class _SelectStudentPageState extends State<SelectStudentPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 child: TextField(
-                  decoration: _decDark('Buscar por nome ou RA...', icon: Icons.search),
+                  decoration: _decDark(
+                    'Buscar por nome ou RA...',
+                    icon: Icons.search,
+                  ),
                   style: const TextStyle(color: Colors.white),
-                  onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                  onChanged: (v) =>
+                      setState(() => _query = v.trim().toLowerCase()),
                 ),
               ),
               Expanded(
@@ -64,8 +73,10 @@ class _SelectStudentPageState extends State<SelectStudentPage> {
                     }
                     if (snap.hasError) {
                       return Center(
-                        child: Text('Erro: ${snap.error}',
-                            style: const TextStyle(color: Colors.white)),
+                        child: Text(
+                          'Erro: ${snap.error}',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       );
                     }
 
@@ -73,13 +84,17 @@ class _SelectStudentPageState extends State<SelectStudentPage> {
                     final filtered = docs.where((d) {
                       final name = (d['name'] ?? '').toString().toLowerCase();
                       final ra = (d['ra'] ?? '').toString().toLowerCase();
-                      return _query.isEmpty || name.contains(_query) || ra.contains(_query);
+                      return _query.isEmpty ||
+                          name.contains(_query) ||
+                          ra.contains(_query);
                     }).toList();
 
                     if (filtered.isEmpty) {
                       return const Center(
-                        child: Text('Nenhum aluno encontrado',
-                            style: TextStyle(color: Colors.white70)),
+                        child: Text(
+                          'Nenhum aluno encontrado',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       );
                     }
 
@@ -97,26 +112,44 @@ class _SelectStudentPageState extends State<SelectStudentPage> {
                         return _Glass(
                           radius: 16,
                           child: ListTile(
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             leading: Container(
-                              width: 38, height: 38,
+                              width: 38,
+                              height: 38,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
+                                  colors: [
+                                    Color(0xFF3E5FBF),
+                                    Color(0xFF7A45C8),
+                                  ],
                                 ),
                               ),
-                              child: const Icon(Icons.person, color: Colors.white),
+                              child: const Icon(
+                                Icons.person,
+                                color: Colors.white,
+                              ),
                             ),
-                            title: Text('$name · RA $ra',
-                                style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('ID: $uid', style: const TextStyle(color: Colors.white70)),
+                            title: Text(
+                              '$name · RA $ra',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            subtitle: Text(
+                              'ID: $uid',
+                              style: const TextStyle(color: Colors.white70),
+                            ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 _UnreadBadge(myUid: _myUid, peerUid: uid),
                                 const SizedBox(width: 8),
-                                const Icon(Icons.chevron_right, color: Colors.white70),
+                                const Icon(
+                                  Icons.chevron_right,
+                                  color: Colors.white70,
+                                ),
                               ],
                             ),
                             onTap: () {
@@ -174,7 +207,13 @@ class _UnreadBadge extends StatelessWidget {
             color: Colors.blueAccent,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text('$c', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+          child: Text(
+            '$c',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         );
       },
     );
@@ -188,8 +227,15 @@ class _BackPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-      label: const Text('Voltar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      icon: const Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: Colors.white,
+        size: 18,
+      ),
+      label: const Text(
+        'Voltar',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
       style: TextButton.styleFrom(
         backgroundColor: Colors.white.withOpacity(.10),
         side: const BorderSide(color: Colors.white24),
@@ -217,7 +263,13 @@ class _Glass extends StatelessWidget {
             color: const Color(0xFF121022).withOpacity(.10),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))],
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 30,
+                offset: Offset(0, 16),
+              ),
+            ],
           ),
           child: child,
         ),
@@ -263,8 +315,12 @@ class _Bg extends StatelessWidget {
               fit: BoxFit.cover,
             ),
             gradient: LinearGradient(
-              colors: [const Color(0xFF0B091B).withOpacity(.88), const Color(0xFF0B091B).withOpacity(.88)],
-              begin: Alignment.topCenter, end: Alignment.bottomCenter,
+              colors: [
+                const Color(0xFF0B091B).withOpacity(.88),
+                const Color(0xFF0B091B).withOpacity(.88),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
             ),
           ),
         ),

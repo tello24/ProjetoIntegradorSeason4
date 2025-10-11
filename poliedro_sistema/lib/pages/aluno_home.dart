@@ -1,3 +1,5 @@
+// lib/pages/aluno_home.dart
+
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../utils/confirm_signout.dart';
 import 'select_professor_page.dart';
 import 'select_class_for_grades_page.dart';
+import 'aluno_turmas_page.dart'; // Import da nova página de turmas
 
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
@@ -23,10 +26,10 @@ class _AlunoHomeState extends State<AlunoHome> {
     _userFuture = uid == null
         ? Future.value(null)
         : FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get()
-            .then((d) => d.data());
+              .collection('users')
+              .doc(uid)
+              .get()
+              .then((d) => d.data());
   }
 
   @override
@@ -35,11 +38,13 @@ class _AlunoHomeState extends State<AlunoHome> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return FutureBuilder<Map<String, dynamic>?>(  // Get user data from Firestore
+    return FutureBuilder<Map<String, dynamic>?>(
       future: _userFuture,
       builder: (context, snap) {
         if (snap.connectionState == ConnectionState.waiting) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
         }
         if (snap.hasError) {
           return const _ErrorScaffold(
@@ -51,17 +56,19 @@ class _AlunoHomeState extends State<AlunoHome> {
         final user = FirebaseAuth.instance.currentUser;
         if (data == null || user == null) {
           return const _ErrorScaffold(
-            message: 'Perfil não encontrado no Firestore.\nFaça login novamente.',
+            message:
+                'Perfil não encontrado no Firestore.\nFaça login novamente.',
           );
         }
 
-        final role  = (data['role']  ?? '').toString();
-        final name  = (data['name']  ?? 'Aluno').toString();
-        final email = (user.email    ?? '').toString();
+        final role = (data['role'] ?? '').toString();
+        final name = (data['name'] ?? 'Aluno').toString();
+        final email = (user.email ?? '').toString();
 
         if (role != 'aluno') {
           return _ErrorScaffold(
-            message: 'Seu perfil não é "aluno". (Perfil atual: "${role.isEmpty ? '—' : role}")',
+            message:
+                'Seu perfil não é "aluno". (Perfil atual: "${role.isEmpty ? '—' : role}")',
           );
         }
 
@@ -81,7 +88,6 @@ class _AlunoHomeState extends State<AlunoHome> {
           body: Stack(
             fit: StackFit.expand,
             children: [
-              // Fundo
               Container(
                 decoration: BoxDecoration(
                   image: const DecorationImage(
@@ -91,29 +97,25 @@ class _AlunoHomeState extends State<AlunoHome> {
                   gradient: LinearGradient(
                     colors: [
                       const Color(0xFF0B091B).withOpacity(.92),
-                      const Color(0xFF0B091B).withOpacity(.92)
+                      const Color(0xFF0B091B).withOpacity(.92),
                     ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                   ),
                 ),
               ),
-
-              // Marca d’água (atrás de tudo)
               Center(
                 child: IgnorePointer(
                   child: Opacity(
                     opacity: 0.12,
                     child: Image.asset(
                       'assets/images/iconePoliedro.png',
-                      width: _watermarkSize(context), // maior no mobile
+                      width: _watermarkSize(context),
                       fit: BoxFit.contain,
                     ),
                   ),
                 ),
               ),
-
-              // Conteúdo
               SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -126,9 +128,13 @@ class _AlunoHomeState extends State<AlunoHome> {
                         child: ListView(
                           padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                           children: [
-                            // Cabeçalho
                             _Glass(
-                              padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+                              padding: const EdgeInsets.fromLTRB(
+                                18,
+                                14,
+                                18,
+                                14,
+                              ),
                               radius: 18,
                               child: Row(
                                 children: [
@@ -136,7 +142,10 @@ class _AlunoHomeState extends State<AlunoHome> {
                                     radius: 26,
                                     backgroundColor: const Color(0xFF3E5FBF),
                                     child: Text(
-                                      (name.isNotEmpty ? name.characters.first : '?').toUpperCase(),
+                                      (name.isNotEmpty
+                                              ? name.characters.first
+                                              : '?')
+                                          .toUpperCase(),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -147,7 +156,8 @@ class _AlunoHomeState extends State<AlunoHome> {
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           name.isNotEmpty ? name : 'Aluno',
@@ -170,7 +180,10 @@ class _AlunoHomeState extends State<AlunoHome> {
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: Colors.white.withOpacity(.12),
                                       borderRadius: BorderRadius.circular(20),
@@ -179,9 +192,16 @@ class _AlunoHomeState extends State<AlunoHome> {
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: const [
-                                        Icon(Icons.school, color: Colors.white, size: 16),
+                                        Icon(
+                                          Icons.school,
+                                          color: Colors.white,
+                                          size: 16,
+                                        ),
                                         SizedBox(width: 6),
-                                        Text('Aluno', style: TextStyle(color: Colors.white)),
+                                        Text(
+                                          'Aluno',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -189,24 +209,39 @@ class _AlunoHomeState extends State<AlunoHome> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
-                            // Grade
                             GridView(
                               padding: EdgeInsets.zero,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: cols,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio: cols == 1 ? 14 / 5 : 14 / 6,
-                              ),
+                              gridDelegate:
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                    crossAxisCount: cols,
+                                    crossAxisSpacing: 12,
+                                    mainAxisSpacing: 12,
+                                    childAspectRatio: cols == 1
+                                        ? 14 / 5
+                                        : 14 / 6,
+                                  ),
                               children: [
+                                _ActionCard(
+                                  icon: Icons.groups_2_outlined,
+                                  title: 'Minhas Turmas',
+                                  subtitle: 'Ver materiais e atividades',
+                                  onTap: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const AlunoTurmasPage(),
+                                    ),
+                                  ),
+                                ),
                                 _ActionCard(
                                   icon: Icons.folder_copy_outlined,
                                   title: 'Meus materiais',
                                   subtitle: 'Arquivos e links compartilhados',
-                                  onTap: () => Navigator.pushNamed(context, '/materials'),
+                                  onTap: () => Navigator.pushNamed(
+                                    context,
+                                    '/materials',
+                                  ),
                                 ),
                                 _ActionCard(
                                   icon: Icons.chat_bubble_outline,
@@ -215,7 +250,8 @@ class _AlunoHomeState extends State<AlunoHome> {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const SelectProfessorPage(),
+                                      builder: (_) =>
+                                          const SelectProfessorPage(),
                                     ),
                                   ),
                                 ),
@@ -226,7 +262,8 @@ class _AlunoHomeState extends State<AlunoHome> {
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) => const SelectClassForGradesPage(),
+                                      builder: (_) =>
+                                          const SelectClassForGradesPage(),
                                     ),
                                   ),
                                 ),
@@ -246,30 +283,23 @@ class _AlunoHomeState extends State<AlunoHome> {
     );
   }
 
-  // >>> maior no mobile, equilibrado no tablet/desktop
   double _watermarkSize(BuildContext context) {
     final w = MediaQuery.of(context).size.width;
     if (w < 640) {
-      // mobile: bem grande
       return (w * 1.15).clamp(420.0, 760.0);
     } else if (w < 1000) {
-      // tablet
       return (w * 0.82).clamp(520.0, 780.0);
     } else {
-      // desktop
       return (w * 0.55).clamp(700.0, 900.0);
     }
   }
 }
-
-/* ========================= UI Helpers ========================= */
 
 class _Glass extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final double radius;
   const _Glass({required this.child, this.padding, this.radius = 20});
-
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -278,12 +308,15 @@ class _Glass extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            // <<< mais transparente para destacar a marca-d’água
             color: const Color(0xFF121022).withOpacity(.10),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
             boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16)),
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 30,
+                offset: Offset(0, 16),
+              ),
             ],
           ),
           padding: padding ?? const EdgeInsets.all(16),
@@ -305,7 +338,6 @@ class _ActionCard extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
   });
-
   @override
   Widget build(BuildContext context) {
     return _Glass(
@@ -336,12 +368,18 @@ class _ActionCard extends StatelessWidget {
                   Text(
                     title,
                     style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12.5,
+                    ),
                   ),
                 ],
               ),
@@ -354,8 +392,11 @@ class _ActionCard extends StatelessWidget {
                 border: Border.all(color: Colors.white12),
               ),
               padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.arrow_forward_ios_rounded,
-                  size: 16, color: Colors.white),
+              child: const Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 16,
+                color: Colors.white,
+              ),
             ),
           ],
         ),
@@ -367,13 +408,13 @@ class _ActionCard extends StatelessWidget {
 class _ErrorScaffold extends StatelessWidget {
   final String message;
   const _ErrorScaffold({required this.message});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: Colors.transparent, elevation: 0,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
             tooltip: 'Sair',
@@ -407,7 +448,7 @@ class _ErrorScaffold extends StatelessWidget {
                 opacity: 0.12,
                 child: Image.asset(
                   'assets/images/iconePoliedro.png',
-                  width: _watermarkSize(context), // mesmo sizing da home
+                  width: _watermarkSize(context),
                 ),
               ),
             ),

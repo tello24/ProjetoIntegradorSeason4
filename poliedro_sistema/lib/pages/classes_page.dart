@@ -1,4 +1,6 @@
 // lib/pages/classes_page.dart
+// CÓDIGO COMPLETO E ATUALIZADO
+
 import 'dart:ui' as ui; // para BackdropFilter.blur
 import 'dart:async';
 
@@ -6,6 +8,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+
+// ALTERAÇÃO 1: Import da nova página de gerenciamento
+import 'gerenciamento_turma_page.dart';
 
 class ClassesPage extends StatefulWidget {
   const ClassesPage({super.key});
@@ -73,7 +78,10 @@ class _ClassesPageState extends State<ClassesPage> {
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF151331),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: const Text('Renomear turma', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Renomear turma',
+          style: TextStyle(color: Colors.white),
+        ),
         content: TextField(
           controller: ctrl,
           style: const TextStyle(color: Colors.white),
@@ -81,8 +89,9 @@ class _ClassesPageState extends State<ClassesPage> {
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar')),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () async {
               try {
@@ -109,7 +118,7 @@ class _ClassesPageState extends State<ClassesPage> {
     }
   }
 
-  // -------------------- GERENCIAR RAs --------------------
+  // -------------------- GERENCIAR RAs (Lógica mantida para o menu de contexto) --------------------
 
   Future<void> _manageStudents(String classId) async {
     final raCtrl = TextEditingController();
@@ -139,15 +148,18 @@ class _ClassesPageState extends State<ClassesPage> {
                 .get();
 
             final lp = prefix.toLowerCase();
-            final list2 = snap2.docs
-                .map((d) => (d.data()['ra'] ?? '').toString())
-                .where((ra) {
-                  final s = ra.toLowerCase();
-                  return s.isNotEmpty && s.startsWith(lp) && !ras.contains(ra);
-                })
-                .toSet()
-                .toList()
-              ..sort();
+            final list2 =
+                snap2.docs
+                    .map((d) => (d.data()['ra'] ?? '').toString())
+                    .where((ra) {
+                      final s = ra.toLowerCase();
+                      return s.isNotEmpty &&
+                          s.startsWith(lp) &&
+                          !ras.contains(ra);
+                    })
+                    .toSet()
+                    .toList()
+                  ..sort();
 
             return list2;
           } catch (_) {
@@ -179,12 +191,13 @@ class _ClassesPageState extends State<ClassesPage> {
                   .limit(10)
                   .get();
 
-              final list = snap.docs
-                  .map((d) => (d.data()['ra'] ?? '').toString())
-                  .where((ra) => ra.isNotEmpty && !ras.contains(ra))
-                  .toSet()
-                  .toList()
-                ..sort();
+              final list =
+                  snap.docs
+                      .map((d) => (d.data()['ra'] ?? '').toString())
+                      .where((ra) => ra.isNotEmpty && !ras.contains(ra))
+                      .toSet()
+                      .toList()
+                    ..sort();
 
               if (dialogCtx.mounted) {
                 setDlg(() => suggestions = list);
@@ -229,10 +242,15 @@ class _ClassesPageState extends State<ClassesPage> {
             },
             child: AlertDialog(
               backgroundColor: const Color(0xFF151331),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
               title: const Text(
                 'Alunos da turma (RAs)',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -246,10 +264,13 @@ class _ClassesPageState extends State<ClassesPage> {
                       LengthLimitingTextInputFormatter(7),
                     ],
                     style: const TextStyle(color: Colors.white),
-                    decoration:
-                        _decDark('Adicionar RA (7 dígitos)', icon: Icons.badge_outlined),
+                    decoration: _decDark(
+                      'Adicionar RA (7 dígitos)',
+                      icon: Icons.badge_outlined,
+                    ),
                     onChanged: (v) => _lookup(v, setDlg),
-                    onSubmitted: (_) async => _addRa(classId, raCtrl, ras, setDlg),
+                    onSubmitted: (_) async =>
+                        _addRa(classId, raCtrl, ras, setDlg),
                   ),
 
                   if (suggestions.isNotEmpty) ...[
@@ -347,18 +368,20 @@ class _ClassesPageState extends State<ClassesPage> {
       return;
     }
     try {
-      final classRef =
-          FirebaseFirestore.instance.collection('classes').doc(classId);
+      final classRef = FirebaseFirestore.instance
+          .collection('classes')
+          .doc(classId);
 
       // subcoleção: classes/{classId}/students/{ra}
-      await classRef
-          .collection('students')
-          .doc(ra)
-          .set({'addedAt': FieldValue.serverTimestamp(), 'ra': ra},
-              SetOptions(merge: true));
+      await classRef.collection('students').doc(ra).set({
+        'addedAt': FieldValue.serverTimestamp(),
+        'ra': ra,
+      }, SetOptions(merge: true));
 
       // array studentRAs na turma (útil para queries do aluno)
-      await classRef.update({'studentRAs': FieldValue.arrayUnion([ra])});
+      await classRef.update({
+        'studentRAs': FieldValue.arrayUnion([ra]),
+      });
 
       setDlg(() {
         if (!ras.contains(ra)) ras.add(ra);
@@ -424,14 +447,17 @@ class _ClassesPageState extends State<ClassesPage> {
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                 child: _Glass(
                   radius: 14,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 10,
+                  ),
                   child: Row(
                     children: [
                       const Icon(Icons.person, size: 18, color: Colors.white70),
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Logado: $_email  (uid: $uidShort)',
+                          'Logado: $_email  (uid: $uidShort)',
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white70),
                         ),
@@ -450,8 +476,10 @@ class _ClassesPageState extends State<ClassesPage> {
                       child: TextField(
                         controller: _nameCtrl,
                         style: const TextStyle(color: Colors.white),
-                        decoration: _decDark('Nome da turma (ex.: 3ºB Matemática)',
-                            icon: Icons.class_outlined),
+                        decoration: _decDark(
+                          'Nome da turma (ex.: 3ºB Matemática)',
+                          icon: Icons.class_outlined,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -476,16 +504,20 @@ class _ClassesPageState extends State<ClassesPage> {
                       return Center(
                         child: Padding(
                           padding: const EdgeInsets.all(16),
-                          child: Text('Erro: ${snap.error}',
-                              style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            'Erro: ${snap.error}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         ),
                       );
                     }
                     final docs = snap.data?.docs ?? [];
                     if (docs.isEmpty) {
                       return const Center(
-                        child: Text('Nenhuma turma ainda.',
-                            style: TextStyle(color: Colors.white70)),
+                        child: Text(
+                          'Nenhuma turma ainda.',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       );
                     }
 
@@ -502,32 +534,60 @@ class _ClassesPageState extends State<ClassesPage> {
                           radius: 16,
                           child: ListTile(
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 12),
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             leading: Container(
                               width: 38,
                               height: 38,
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(8),
                                 gradient: const LinearGradient(
-                                  colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
+                                  colors: [
+                                    Color(0xFF3E5FBF),
+                                    Color(0xFF7A45C8),
+                                  ],
                                 ),
                               ),
-                              child:
-                                  const Icon(Icons.folder_open, color: Colors.white),
+                              child: const Icon(
+                                Icons.folder_open,
+                                color: Colors.white,
+                              ),
                             ),
-                            title: Text(name.isEmpty ? '(sem nome)' : name,
-                                style: const TextStyle(color: Colors.white)),
-                            subtitle: Text('id: ${d.id}',
-                                style: const TextStyle(color: Colors.white54)),
-                            onTap: () => _manageStudents(d.id),
+                            title: Text(
+                              name.isEmpty ? '(sem nome)' : name,
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                            subtitle: Text(
+                              'id: ${d.id}',
+                              style: const TextStyle(color: Colors.white54),
+                            ),
+
+                            // ALTERAÇÃO 2: Ação de clique atualizada para navegar para a nova página
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => GerenciamentoTurmaPage(
+                                    turmaId: d.id,
+                                    nomeTurma: name,
+                                  ),
+                                ),
+                              );
+                            },
+
                             trailing: PopupMenuButton<String>(
                               color: const Color(0xFF1A1830),
                               surfaceTintColor: Colors.transparent,
                               shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12)),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                               elevation: 6,
                               offset: const Offset(0, 8),
-                              icon: const Icon(Icons.more_vert, color: Colors.white70),
+                              icon: const Icon(
+                                Icons.more_vert,
+                                color: Colors.white70,
+                              ),
                               onSelected: (v) async {
                                 if (v == 'rename') {
                                   await _editName(d.reference, name);
@@ -541,13 +601,16 @@ class _ClassesPageState extends State<ClassesPage> {
                                 PopupMenuItem(
                                   value: 'rename',
                                   child: _MenuTile(
-                                      icon: Icons.edit_outlined, label: 'Renomear'),
+                                    icon: Icons.edit_outlined,
+                                    label: 'Renomear',
+                                  ),
                                 ),
                                 PopupMenuItem(
                                   value: 'addra',
                                   child: _MenuTile(
-                                      icon: Icons.person_add_alt_1,
-                                      label: 'Adicionar RA'),
+                                    icon: Icons.person_add_alt_1,
+                                    label: 'Adicionar RA',
+                                  ),
                                 ),
                                 PopupMenuDivider(),
                                 PopupMenuItem(
@@ -610,10 +673,15 @@ class _BackPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextButton.icon(
       onPressed: onTap,
-      icon:
-          const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
-      label: const Text('Voltar',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      icon: const Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: Colors.white,
+        size: 18,
+      ),
+      label: const Text(
+        'Voltar',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
       style: TextButton.styleFrom(
         backgroundColor: Colors.white.withOpacity(.10),
         side: const BorderSide(color: Colors.white24),
@@ -638,16 +706,27 @@ class _RaChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white24),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(text,
-            style:
-                const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        const SizedBox(width: 8),
-        GestureDetector(
-          onTap: onDelete,
-          child: const Icon(Icons.close_rounded, size: 16, color: Colors.white70),
-        ),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: onDelete,
+            child: const Icon(
+              Icons.close_rounded,
+              size: 16,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -665,15 +744,20 @@ class _RaSuggestionChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: Colors.white30),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.search, size: 14, color: Colors.white70),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-        ),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.search, size: 14, color: Colors.white70),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -692,7 +776,10 @@ class _MenuTile extends StatelessWidget {
         Icon(icon, size: 20, color: c),
         const SizedBox(width: 10),
         Expanded(
-          child: Text(label, style: TextStyle(color: c, fontWeight: FontWeight.w600)),
+          child: Text(
+            label,
+            style: TextStyle(color: c, fontWeight: FontWeight.w600),
+          ),
         ),
       ],
     );
@@ -718,7 +805,11 @@ class _Glass extends StatelessWidget {
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
             boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 30,
+                offset: Offset(0, 16),
+              ),
             ],
           ),
           child: child,
@@ -745,7 +836,7 @@ class _Bg extends StatelessWidget {
             gradient: LinearGradient(
               colors: [
                 const Color(0xFF0B091B).withOpacity(.88),
-                const Color(0xFF0B091B).withOpacity(.88)
+                const Color(0xFF0B091B).withOpacity(.88),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,

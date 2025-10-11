@@ -11,7 +11,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 // IO por padrão; no web usa Blob/anchor
 import '../utils/open_inline_io.dart'
-  if (dart.library.html) '../utils/open_inline_web.dart';
+    if (dart.library.html) '../utils/open_inline_web.dart';
 
 // Tela de detalhes
 import 'material_details.dart';
@@ -72,8 +72,9 @@ class _MaterialsPageState extends State<MaterialsPage> {
           ? null
           : (d.data()?['ra'] ?? '').toString();
 
-      Query<Map<String, dynamic>> q =
-          FirebaseFirestore.instance.collection('materials');
+      Query<Map<String, dynamic>> q = FirebaseFirestore.instance.collection(
+        'materials',
+      );
 
       if (_isProfessor) {
         // professor: vê apenas os próprios
@@ -159,24 +160,32 @@ class _MaterialsPageState extends State<MaterialsPage> {
       backgroundColor: const Color(0xFF1A1830),
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      title: Text(
+        title,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
       content: content,
       actionsPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       actions: actions
-          .map((w) => Theme(
-                data: ThemeData(
-                  textButtonTheme: TextButtonThemeData(
-                    style: TextButton.styleFrom(foregroundColor: Colors.white),
-                  ),
-                  filledButtonTheme: FilledButtonThemeData(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(.12),
-                      foregroundColor: Colors.white,
-                    ),
+          .map(
+            (w) => Theme(
+              data: ThemeData(
+                textButtonTheme: TextButtonThemeData(
+                  style: TextButton.styleFrom(foregroundColor: Colors.white),
+                ),
+                filledButtonTheme: FilledButtonThemeData(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(.12),
+                    foregroundColor: Colors.white,
                   ),
                 ),
-                child: w,
-              ))
+              ),
+              child: w,
+            ),
+          )
           .toList(),
     );
   }
@@ -225,7 +234,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
             FilledButton.icon(
               onPressed: saving
                   ? null
@@ -236,7 +248,11 @@ class _MaterialsPageState extends State<MaterialsPage> {
                       if (ctx.mounted) Navigator.pop(ctx);
                     },
               icon: saving
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Icon(Icons.save_outlined),
               label: const Text('Criar'),
             ),
@@ -305,12 +321,20 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           .get();
                       setDlg(() {
                         all = classesSnap.docs
-                            .map((d) => (id: d.id, name: (d['name'] ?? '').toString()))
+                            .map(
+                              (d) => (
+                                id: d.id,
+                                name: (d['name'] ?? '').toString(),
+                              ),
+                            )
                             .toList();
                       });
                     },
                     icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Nova turma', style: TextStyle(color: Colors.white)),
+                    label: const Text(
+                      'Nova turma',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
                 Flexible(
@@ -323,14 +347,18 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           activeColor: Colors.white,
                           checkColor: Colors.black,
                           controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
                           title: Text(
                             c.name.isEmpty ? c.id : c.name,
                             style: const TextStyle(color: Colors.white),
                           ),
                           onChanged: (v) => setDlg(() {
-                            if (v == true) pre.add(c.id);
-                            else pre.remove(c.id);
+                            if (v == true)
+                              pre.add(c.id);
+                            else
+                              pre.remove(c.id);
                           }),
                         ),
                     ],
@@ -340,7 +368,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
             FilledButton.icon(
               icon: const Icon(Icons.save_outlined),
               label: const Text('Usar selecionadas'),
@@ -350,9 +381,11 @@ class _MaterialsPageState extends State<MaterialsPage> {
                   ..addAll(pre);
                 _selectedClassNames
                   ..clear()
-                  ..addAll(all
-                      .where((c) => pre.contains(c.id))
-                      .map((c) => c.name.isEmpty ? c.id : c.name));
+                  ..addAll(
+                    all
+                        .where((c) => pre.contains(c.id))
+                        .map((c) => c.name.isEmpty ? c.id : c.name),
+                  );
                 Navigator.pop(ctx);
                 setState(() {});
               },
@@ -391,7 +424,8 @@ class _MaterialsPageState extends State<MaterialsPage> {
     final subject = _subject.text.trim();
     final url = _linkUrl.text.trim();
 
-    if (url.isEmpty || !(url.startsWith('http://') || url.startsWith('https://'))) {
+    if (url.isEmpty ||
+        !(url.startsWith('http://') || url.startsWith('https://'))) {
       _snack('Informe uma URL válida (http/https).');
       return;
     }
@@ -476,7 +510,8 @@ class _MaterialsPageState extends State<MaterialsPage> {
 
       final title = _title.text.trim().isEmpty ? fileName : _title.text.trim();
       final subject = _subject.text.trim();
-      final contentType = lookupMimeType(fileName) ?? 'application/octet-stream';
+      final contentType =
+          lookupMimeType(fileName) ?? 'application/octet-stream';
 
       setState(() => _status = 'Convertendo arquivo...');
       final b64 = base64Encode(bytes);
@@ -530,9 +565,13 @@ class _MaterialsPageState extends State<MaterialsPage> {
       return;
     }
 
-    final titleCtrl = TextEditingController(text: (data['title'] ?? '').toString());
-    final subjCtrl  = TextEditingController(text: (data['subject'] ?? '').toString());
-    final urlCtrl   = TextEditingController(text: (data['url'] ?? '').toString());
+    final titleCtrl = TextEditingController(
+      text: (data['title'] ?? '').toString(),
+    );
+    final subjCtrl = TextEditingController(
+      text: (data['subject'] ?? '').toString(),
+    );
+    final urlCtrl = TextEditingController(text: (data['url'] ?? '').toString());
 
     await showDialog(
       context: context,
@@ -565,26 +604,37 @@ class _MaterialsPageState extends State<MaterialsPage> {
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancelar'),
+          ),
           FilledButton.icon(
             icon: const Icon(Icons.save_outlined),
             label: const Text('Salvar'),
             onPressed: () async {
               final newTitle = titleCtrl.text.trim();
-              final newSubj  = subjCtrl.text.trim();
-              final newUrl   = urlCtrl.text.trim();
+              final newSubj = subjCtrl.text.trim();
+              final newUrl = urlCtrl.text.trim();
 
-              if (type == 'link' && newUrl.isNotEmpty &&
-                  !(newUrl.startsWith('http://') || newUrl.startsWith('https://'))) {
+              if (type == 'link' &&
+                  newUrl.isNotEmpty &&
+                  !(newUrl.startsWith('http://') ||
+                      newUrl.startsWith('https://'))) {
                 _snack('URL inválida. Use http/https.');
                 return;
               }
 
               try {
-                final payload = <String, dynamic>{'title': newTitle, 'subject': newSubj};
+                final payload = <String, dynamic>{
+                  'title': newTitle,
+                  'subject': newSubj,
+                };
                 if (type == 'link') payload['url'] = newUrl;
                 await doc.reference.update(payload);
-                if (mounted) { Navigator.pop(context); _snack('Material atualizado!'); }
+                if (mounted) {
+                  Navigator.pop(context);
+                  _snack('Material atualizado!');
+                }
               } on FirebaseException catch (e) {
                 _snack('Falha: ${e.code} — ${e.message}');
               } catch (e) {
@@ -641,12 +691,20 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           .get();
                       setDlg(() {
                         all = classesSnap.docs
-                            .map((d) => (id: d.id, name: (d['name'] ?? '').toString()))
+                            .map(
+                              (d) => (
+                                id: d.id,
+                                name: (d['name'] ?? '').toString(),
+                              ),
+                            )
                             .toList();
                       });
                     },
                     icon: const Icon(Icons.add, color: Colors.white),
-                    label: const Text('Nova turma', style: TextStyle(color: Colors.white)),
+                    label: const Text(
+                      'Nova turma',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ),
                 Flexible(
@@ -659,14 +717,18 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           activeColor: Colors.white,
                           checkColor: Colors.black,
                           controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                          ),
                           title: Text(
                             c.name.isEmpty ? c.id : c.name,
                             style: const TextStyle(color: Colors.white),
                           ),
                           onChanged: (v) => setDlg(() {
-                            if (v == true) preSelected.add(c.id);
-                            else preSelected.remove(c.id);
+                            if (v == true)
+                              preSelected.add(c.id);
+                            else
+                              preSelected.remove(c.id);
                           }),
                         ),
                     ],
@@ -676,7 +738,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
             FilledButton.icon(
               icon: const Icon(Icons.save_outlined),
               label: const Text('Salvar turmas'),
@@ -783,7 +848,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
                   child: TextField(
                     controller: _searchCtrl,
                     style: const TextStyle(color: Colors.white),
-                    decoration: _dec('Buscar por título...', icon: Icons.search),
+                    decoration: _dec(
+                      'Buscar por título...',
+                      icon: Icons.search,
+                    ),
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
@@ -799,8 +867,11 @@ class _MaterialsPageState extends State<MaterialsPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Novo material',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white)),
+                        Text(
+                          'Novo material',
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(color: Colors.white),
+                        ),
                         const SizedBox(height: 10),
                         Row(
                           children: [
@@ -808,7 +879,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               child: TextField(
                                 controller: _title,
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _dec('Título (opcional)', icon: Icons.title),
+                                decoration: _dec(
+                                  'Título (opcional)',
+                                  icon: Icons.title,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -816,7 +890,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               child: TextField(
                                 controller: _subject,
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _dec('Disciplina/Assunto (opcional)', icon: Icons.menu_book_outlined),
+                                decoration: _dec(
+                                  'Disciplina/Assunto (opcional)',
+                                  icon: Icons.menu_book_outlined,
+                                ),
                               ),
                             ),
                           ],
@@ -830,10 +907,19 @@ class _MaterialsPageState extends State<MaterialsPage> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.groups_2_outlined, size: 18, color: Colors.white70),
+                                  const Icon(
+                                    Icons.groups_2_outlined,
+                                    size: 18,
+                                    color: Colors.white70,
+                                  ),
                                   const SizedBox(width: 8),
-                                  Text('Compartilhar com turmas',
-                                      style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.white)),
+                                  Text(
+                                    'Compartilhar com turmas',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(color: Colors.white),
+                                  ),
                                   const Spacer(),
                                   FilledButton.icon(
                                     onPressed: _busy ? null : _pickClasses,
@@ -846,7 +932,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               if (_selectedClassIds.isEmpty)
                                 const Text(
                                   'Nenhuma turma selecionada — os alunos não verão este material.',
-                                  style: TextStyle(color: Colors.white70, fontStyle: FontStyle.italic),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontStyle: FontStyle.italic,
+                                  ),
                                 )
                               else
                                 Wrap(
@@ -854,7 +943,9 @@ class _MaterialsPageState extends State<MaterialsPage> {
                                   runSpacing: 8,
                                   children: [
                                     for (final name in _selectedClassNames)
-                                      _TagPill(text: name.isEmpty ? 'Turma' : name),
+                                      _TagPill(
+                                        text: name.isEmpty ? 'Turma' : name,
+                                      ),
                                   ],
                                 ),
                             ],
@@ -867,8 +958,11 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               child: TextField(
                                 controller: _linkUrl,
                                 style: const TextStyle(color: Colors.white),
-                                decoration: _dec('URL (http/https)',
-                                    icon: Icons.link, hint2: 'https://exemplo.com/arquivo.pdf'),
+                                decoration: _dec(
+                                  'URL (http/https)',
+                                  icon: Icons.link,
+                                  hint2: 'https://exemplo.com/arquivo.pdf',
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -877,7 +971,10 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               icon: const Icon(Icons.add_link),
                               label: const Text('Salvar link'),
                               style: ElevatedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -888,16 +985,27 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           child: OutlinedButton.icon(
                             onPressed: _busy ? null : _pickAndEmbedSmallFile,
                             icon: const Icon(Icons.attach_file),
-                            label: const Text('Selecionar arquivo e salvar (até ~700KB)'),
+                            label: const Text(
+                              'Selecionar arquivo e salvar (até ~700KB)',
+                            ),
                           ),
                         ),
                         if (_status != null) ...[
                           const SizedBox(height: 8),
                           Row(
                             children: [
-                              const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
                               const SizedBox(width: 8),
-                              Text(_status!, style: const TextStyle(color: Colors.white)),
+                              Text(
+                                _status!,
+                                style: const TextStyle(color: Colors.white),
+                              ),
                             ],
                           ),
                         ],
@@ -914,7 +1022,9 @@ class _MaterialsPageState extends State<MaterialsPage> {
                         stream: _materialsStream,
                         builder: (context, snap) {
                           if (snap.connectionState == ConnectionState.waiting) {
-                            return const Center(child: CircularProgressIndicator());
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
                           }
 
                           // Erro/índice
@@ -926,11 +1036,21 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const Text('Erro ao listar materiais:',
-                                      style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                                  const Text(
+                                    'Erro ao listar materiais:',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                   const SizedBox(height: 8),
-                                  Text(err, textAlign: TextAlign.center,
-                                      style: const TextStyle(color: Colors.white70)),
+                                  Text(
+                                    err,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                    ),
+                                  ),
                                   const SizedBox(height: 12),
                                   if (url != null)
                                     FilledButton.icon(
@@ -943,7 +1063,9 @@ class _MaterialsPageState extends State<MaterialsPage> {
                                         );
                                       },
                                       icon: const Icon(Icons.open_in_new),
-                                      label: const Text('Abrir link para criar índice'),
+                                      label: const Text(
+                                        'Abrir link para criar índice',
+                                      ),
                                     ),
                                 ],
                               ),
@@ -953,14 +1075,19 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           final docs = snap.data?.docs ?? [];
                           if (docs.isEmpty) {
                             return const Center(
-                              child: Text('Nenhum material disponível.', style: TextStyle(color: Colors.white70)),
+                              child: Text(
+                                'Nenhum material disponível.',
+                                style: TextStyle(color: Colors.white70),
+                              ),
                             );
                           }
 
                           // disciplinas
                           final subjects = <String>{};
                           for (final d in docs) {
-                            final subj = (d.data()['subject'] ?? '').toString().trim();
+                            final subj = (d.data()['subject'] ?? '')
+                                .toString()
+                                .trim();
                             if (subj.isNotEmpty) subjects.add(subj);
                           }
                           final subjectsList = subjects.toList()..sort();
@@ -970,9 +1097,14 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           final filtered = docs.where((d) {
                             final data = d.data();
                             final subj = (data['subject'] ?? '').toString();
-                            final title = (data['title'] ?? '').toString().toLowerCase();
-                            final subjectOk = _selectedSubject == null || _selectedSubject == subj;
-                            final searchOk = term.isEmpty || title.contains(term);
+                            final title = (data['title'] ?? '')
+                                .toString()
+                                .toLowerCase();
+                            final subjectOk =
+                                _selectedSubject == null ||
+                                _selectedSubject == subj;
+                            final searchOk =
+                                term.isEmpty || title.contains(term);
                             return subjectOk && searchOk;
                           }).toList();
 
@@ -980,7 +1112,12 @@ class _MaterialsPageState extends State<MaterialsPage> {
                             children: [
                               // === CHIPS (apenas filtros) ===
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+                                padding: const EdgeInsets.fromLTRB(
+                                  12,
+                                  8,
+                                  12,
+                                  6,
+                                ),
                                 child: Wrap(
                                   spacing: 8,
                                   runSpacing: 8,
@@ -989,13 +1126,19 @@ class _MaterialsPageState extends State<MaterialsPage> {
                                     _FilterPill(
                                       text: 'Todas',
                                       selected: _selectedSubject == null,
-                                      onTap: () => setState(() => _selectedSubject = null),
+                                      onTap: () => setState(
+                                        () => _selectedSubject = null,
+                                      ),
                                     ),
-                                    ...subjectsList.map((s) => _FilterPill(
-                                          text: s,
-                                          selected: _selectedSubject == s,
-                                          onTap: () => setState(() => _selectedSubject = s),
-                                        )),
+                                    ...subjectsList.map(
+                                      (s) => _FilterPill(
+                                        text: s,
+                                        selected: _selectedSubject == s,
+                                        onTap: () => setState(
+                                          () => _selectedSubject = s,
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -1003,25 +1146,38 @@ class _MaterialsPageState extends State<MaterialsPage> {
                               // Lista
                               Expanded(
                                 child: ListView.separated(
-                                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                                  padding: const EdgeInsets.fromLTRB(
+                                    12,
+                                    0,
+                                    12,
+                                    16,
+                                  ),
                                   itemCount: filtered.length,
-                                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                                  separatorBuilder: (_, __) =>
+                                      const SizedBox(height: 8),
                                   itemBuilder: (_, i) {
                                     final d = filtered[i];
                                     final data = d.data();
-                                    final type = (data['type'] ?? '').toString();
-                                    final title = (data['title'] ?? 'Sem título').toString();
-                                    final subject = (data['subject'] ?? '').toString();
+                                    final type = (data['type'] ?? '')
+                                        .toString();
+                                    final title =
+                                        (data['title'] ?? 'Sem título')
+                                            .toString();
+                                    final subject = (data['subject'] ?? '')
+                                        .toString();
 
                                     IconData icon;
                                     String subtitle = subject;
                                     if (type == 'link') {
                                       icon = Icons.link;
-                                      if (subtitle.isEmpty) subtitle = (data['url'] ?? '').toString();
+                                      if (subtitle.isEmpty)
+                                        subtitle = (data['url'] ?? '')
+                                            .toString();
                                     } else if (type == 'inline') {
                                       icon = Icons.insert_drive_file;
                                       if (subtitle.isEmpty) {
-                                        final name = (data['fileName'] ?? '').toString();
+                                        final name = (data['fileName'] ?? '')
+                                            .toString();
                                         final size = (data['size'] ?? 0) as int;
                                         subtitle = '$name · ${_fmtBytes(size)}';
                                       }
@@ -1032,66 +1188,111 @@ class _MaterialsPageState extends State<MaterialsPage> {
                                     return _Glass(
                                       radius: 16,
                                       child: ListTile(
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 12,
+                                            ),
                                         leading: Container(
                                           width: 38,
                                           height: 38,
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
                                             gradient: const LinearGradient(
-                                              colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
+                                              colors: [
+                                                Color(0xFF3E5FBF),
+                                                Color(0xFF7A45C8),
+                                              ],
                                             ),
                                           ),
-                                          child: Icon(icon, color: Colors.white),
+                                          child: Icon(
+                                            icon,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                        title: Text(title, style: const TextStyle(color: Colors.white)),
+                                        title: Text(
+                                          title,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                          ),
+                                        ),
                                         subtitle: subtitle.isNotEmpty
-                                            ? Text(subtitle, style: const TextStyle(color: Colors.white70))
+                                            ? Text(
+                                                subtitle,
+                                                style: const TextStyle(
+                                                  color: Colors.white70,
+                                                ),
+                                              )
                                             : null,
                                         trailing: _isProfessor
                                             ? PopupMenuButton<String>(
                                                 tooltip: 'Ações',
                                                 color: const Color(0xFF1A1830),
-                                                surfaceTintColor: Colors.transparent,
+                                                surfaceTintColor:
+                                                    Colors.transparent,
                                                 shape: RoundedRectangleBorder(
-                                                  borderRadius: BorderRadius.circular(12),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
                                                 ),
                                                 elevation: 6,
                                                 offset: const Offset(0, 8),
-                                                icon: const Icon(Icons.more_vert, color: Colors.white70),
+                                                icon: const Icon(
+                                                  Icons.more_vert,
+                                                  color: Colors.white70,
+                                                ),
                                                 onSelected: (v) async {
-                                                  if (v == 'edit') await _showEditDialog(d);
-                                                  if (v == 'classes') await _editClassesForMaterial(d);
-                                                  if (v == 'delete') await _deleteMaterial(d);
+                                                  if (v == 'edit')
+                                                    await _showEditDialog(d);
+                                                  if (v == 'classes')
+                                                    await _editClassesForMaterial(
+                                                      d,
+                                                    );
+                                                  if (v == 'delete')
+                                                    await _deleteMaterial(d);
                                                 },
                                                 itemBuilder: (ctx) => [
                                                   PopupMenuItem(
                                                     value: 'edit',
-                                                    child: _MenuTile(icon: Icons.edit_outlined, label: 'Editar'),
+                                                    child: _MenuTile(
+                                                      icon: Icons.edit_outlined,
+                                                      label: 'Editar',
+                                                    ),
                                                   ),
                                                   PopupMenuItem(
                                                     value: 'classes',
                                                     child: _MenuTile(
-                                                        icon: Icons.groups_2_outlined, label: 'Editar turmas'),
+                                                      icon: Icons
+                                                          .groups_2_outlined,
+                                                      label: 'Editar turmas',
+                                                    ),
                                                   ),
                                                   const PopupMenuDivider(),
                                                   PopupMenuItem(
                                                     value: 'delete',
                                                     child: _MenuTile(
-                                                      icon: Icons.delete_outline,
+                                                      icon:
+                                                          Icons.delete_outline,
                                                       label: 'Excluir',
                                                       color: Colors.redAccent,
                                                     ),
                                                   ),
                                                 ],
                                               )
-                                            : const Icon(Icons.arrow_forward_ios_rounded,
-                                                color: Colors.white70, size: 18),
+                                            : const Icon(
+                                                Icons.arrow_forward_ios_rounded,
+                                                color: Colors.white70,
+                                                size: 18,
+                                              ),
                                         onTap: () {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (_) => MaterialDetailsPage(ref: d.reference),
+                                              builder: (_) =>
+                                                  MaterialDetailsPage(
+                                                    ref: d.reference,
+                                                  ),
                                             ),
                                           );
                                         },
@@ -1130,7 +1331,10 @@ class _Bg extends StatelessWidget {
               fit: BoxFit.cover,
             ),
             gradient: LinearGradient(
-              colors: [const Color(0xFF0B091B).withOpacity(.88), const Color(0xFF0B091B).withOpacity(.88)],
+              colors: [
+                const Color(0xFF0B091B).withOpacity(.88),
+                const Color(0xFF0B091B).withOpacity(.88),
+              ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
@@ -1180,7 +1384,13 @@ class _Glass extends StatelessWidget {
             color: const Color(0xFF121022).withOpacity(.10),
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
-            boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 16))],
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black26,
+                blurRadius: 30,
+                offset: Offset(0, 16),
+              ),
+            ],
           ),
           child: child,
         ),
@@ -1193,11 +1403,17 @@ class _FilterPill extends StatelessWidget {
   final String text;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterPill({required this.text, required this.selected, required this.onTap});
+  const _FilterPill({
+    required this.text,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final gradient = selected ? const LinearGradient(colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)]) : null;
+    final gradient = selected
+        ? const LinearGradient(colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)])
+        : null;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -1209,10 +1425,16 @@ class _FilterPill extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: selected ? Colors.white24 : Colors.white12),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          if (selected) ...[const Icon(Icons.check, size: 16, color: Colors.white), const SizedBox(width: 6)],
-          Text(text, style: const TextStyle(color: Colors.white)),
-        ]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (selected) ...[
+              const Icon(Icons.check, size: 16, color: Colors.white),
+              const SizedBox(width: 6),
+            ],
+            Text(text, style: const TextStyle(color: Colors.white)),
+          ],
+        ),
       ),
     );
   }

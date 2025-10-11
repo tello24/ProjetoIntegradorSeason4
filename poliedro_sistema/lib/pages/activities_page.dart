@@ -39,15 +39,25 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     setState(() {});
   }
 
-  Future<void> _createOrEditActivity({DocumentReference? ref, Map<String, dynamic>? data}) async {
-    final titleCtrl   = TextEditingController(text: data?['title']?.toString() ?? '');
-    final subjectCtrl = TextEditingController(text: data?['subject']?.toString() ?? '');
-    final weightCtrl  = TextEditingController(text: (data?['weight'] ?? 1).toString());
+  Future<void> _createOrEditActivity({
+    DocumentReference? ref,
+    Map<String, dynamic>? data,
+  }) async {
+    final titleCtrl = TextEditingController(
+      text: data?['title']?.toString() ?? '',
+    );
+    final subjectCtrl = TextEditingController(
+      text: data?['subject']?.toString() ?? '',
+    );
+    final weightCtrl = TextEditingController(
+      text: (data?['weight'] ?? 1).toString(),
+    );
 
-    String? classId   = data?['classId']?.toString();
+    String? classId = data?['classId']?.toString();
     String? className = data?['className']?.toString();
-    DateTime? dueDate =
-        (data?['dueDate'] is Timestamp) ? (data?['dueDate'] as Timestamp).toDate() : null;
+    DateTime? dueDate = (data?['dueDate'] is Timestamp)
+        ? (data?['dueDate'] as Timestamp).toDate()
+        : null;
 
     await showDialog(
       context: context,
@@ -79,9 +89,10 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
 
             Future<void> _onSave() async {
               if (!formKey.currentState!.validate()) return;
-              final title   = titleCtrl.text.trim();
+              final title = titleCtrl.text.trim();
               final subject = subjectCtrl.text.trim();
-              final weight  = num.tryParse(weightCtrl.text.replaceAll(',', '.')) ?? 1;
+              final weight =
+                  num.tryParse(weightCtrl.text.replaceAll(',', '.')) ?? 1;
 
               final coll = FirebaseFirestore.instance.collection('activities');
               final payload = <String, dynamic>{
@@ -91,7 +102,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 'subject': subject,
                 'title': title,
                 'weight': weight,
-                'dueDate': localDue != null ? Timestamp.fromDate(localDue!) : null,
+                'dueDate': localDue != null
+                    ? Timestamp.fromDate(localDue!)
+                    : null,
               };
 
               if (ref == null) {
@@ -117,10 +130,12 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                         builder: (context, s) {
                           final docs = s.data?.docs ?? [];
                           final items = docs
-                              .map((d) => DropdownMenuItem<String>(
-                                    value: d.id,
-                                    child: Text(d['name'] ?? d.id),
-                                  ))
+                              .map(
+                                (d) => DropdownMenuItem<String>(
+                                  value: d.id,
+                                  child: Text(d['name'] ?? d.id),
+                                ),
+                              )
                               .toList();
                           return DropdownButtonFormField<String>(
                             value: localClassId,
@@ -130,9 +145,12 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                               labelText: 'Turma',
                               border: OutlineInputBorder(),
                             ),
-                            validator: (v) => v == null ? 'Selecione a turma' : null,
+                            validator: (v) =>
+                                v == null ? 'Selecione a turma' : null,
                             onChanged: (v) {
-                              final name = docs.firstWhere((e) => e.id == v).data()['name'];
+                              final name = docs
+                                  .firstWhere((e) => e.id == v)
+                                  .data()['name'];
                               setLocal(() {
                                 localClassId = v;
                                 localClassName = name;
@@ -163,8 +181,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                           labelText: 'Título da atividade',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (v) =>
-                            (v == null || v.trim().isEmpty) ? 'Informe o título' : null,
+                        validator: (v) => (v == null || v.trim().isEmpty)
+                            ? 'Informe o título'
+                            : null,
                       ),
                       const SizedBox(height: 12),
 
@@ -177,7 +196,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                           border: OutlineInputBorder(),
                         ),
                         validator: (v) {
-                          final n = num.tryParse((v ?? '').replaceAll(',', '.'));
+                          final n = num.tryParse(
+                            (v ?? '').replaceAll(',', '.'),
+                          );
                           if (n == null) return 'Peso inválido';
                           if (n <= 0) return 'Peso deve ser > 0';
                           return null;
@@ -206,7 +227,10 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                 ),
               ),
               actions: [
-                TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancelar'),
+                ),
                 FilledButton(onPressed: _onSave, child: const Text('Salvar')),
               ],
             );
@@ -221,11 +245,19 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Excluir atividade'),
-        content: Text('Tem certeza que deseja excluir "$title"?\n'
-            'As notas dessa atividade também serão removidas.'),
+        content: Text(
+          'Tem certeza que deseja excluir "$title"?\n'
+          'As notas dessa atividade também serão removidas.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir'),
+          ),
         ],
       ),
     );
@@ -243,7 +275,9 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     batch.delete(ref);
     await batch.commit();
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Atividade excluída.')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Atividade excluída.')));
   }
 
   @override
@@ -252,9 +286,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Atividades'),
-      ),
+      appBar: AppBar(title: const Text('Atividades')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _createOrEditActivity,
         icon: const Icon(Icons.add),
@@ -281,9 +313,16 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                   ),
                   isExpanded: true,
                   items: [
-                    const DropdownMenuItem(value: null, child: Text('Todas as turmas')),
-                    ...docs.map((d) =>
-                        DropdownMenuItem(value: d.id, child: Text(d['name'] ?? d.id))),
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('Todas as turmas'),
+                    ),
+                    ...docs.map(
+                      (d) => DropdownMenuItem(
+                        value: d.id,
+                        child: Text(d['name'] ?? d.id),
+                      ),
+                    ),
                   ],
                   onChanged: (v) {
                     _filterClassId = v;
@@ -313,11 +352,12 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                   itemBuilder: (_, i) {
                     final d = docs[i];
                     final data = d.data();
-                    final title   = (data['title'] ?? '').toString();
+                    final title = (data['title'] ?? '').toString();
                     final subject = (data['subject'] ?? '').toString();
-                    final weight  = (data['weight'] ?? 1);
-                    final classNm = (data['className'] ?? data['classId'] ?? '').toString();
-                    final due     = (data['dueDate'] is Timestamp)
+                    final weight = (data['weight'] ?? 1);
+                    final classNm = (data['className'] ?? data['classId'] ?? '')
+                        .toString();
+                    final due = (data['dueDate'] is Timestamp)
                         ? (data['dueDate'] as Timestamp).toDate()
                         : null;
 
@@ -345,7 +385,8 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                                   MaterialPageRoute(
                                     builder: (_) => GradesPage(
                                       activityRef: d.reference,
-                                      activityData: data, // contém classId, className, subject, weight etc.
+                                      activityData:
+                                          data, // contém classId, className, subject, weight etc.
                                     ),
                                   ),
                                 );
@@ -354,12 +395,16 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                             IconButton(
                               tooltip: 'Editar',
                               icon: const Icon(Icons.edit_outlined),
-                              onPressed: () => _createOrEditActivity(ref: d.reference, data: data),
+                              onPressed: () => _createOrEditActivity(
+                                ref: d.reference,
+                                data: data,
+                              ),
                             ),
                             IconButton(
                               tooltip: 'Excluir',
                               icon: const Icon(Icons.delete_outline),
-                              onPressed: () => _deleteActivity(d.reference, title),
+                              onPressed: () =>
+                                  _deleteActivity(d.reference, title),
                             ),
                           ],
                         ),
