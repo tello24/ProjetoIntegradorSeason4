@@ -1,5 +1,5 @@
 // lib/pages/classes_page.dart
-// CÓDIGO COMPLETO E ATUALIZADO
+// CÓDIGO COMPLETO E ATUALIZADO (exclusão em cascata da turma)
 
 import 'dart:ui' as ui; // para BackdropFilter.blur
 import 'dart:async';
@@ -9,7 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-// ALTERAÇÃO 1: Import da nova página de gerenciamento
+// Página de gerenciamento da turma
 import 'gerenciamento_turma_page.dart';
 
 class ClassesPage extends StatefulWidget {
@@ -58,7 +58,7 @@ class _ClassesPageState extends State<ClassesPage> {
     try {
       await FirebaseFirestore.instance.collection('classes').add({
         'name': name,
-        'ownerUid': _uid, // ✅ obrigatório nas regras
+        'ownerUid': _uid, // ✅ obrigatório pelas regras
         'ownerEmail': _email,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -109,16 +109,89 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
-  Future<void> _deleteClass(DocumentReference ref) async {
+  /// ✅ EXCLUSÃO EM CASCATA
+  Future<void> _deleteClass(DocumentReference classRef) async {
+    final cid = classRef.id;
+
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Excluir turma'),
+        content: const Text(
+          'Tem certeza?\n\n'
+          '• A subcoleção de alunos será removida;\n'
+          '• Materiais que referenciam esta turma deixarão de referenciá-la;\n'
+          '• Materiais que ficarem sem nenhuma turma serão excluídos.'
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancelar')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Excluir')),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
     try {
-      await ref.delete(); // regras permitem se você for o dono
-      _snack('Turma excluída.');
+      // 1) Apaga subcoleção /classes/{cid}/students em lotes
+      const pageSize = 300;
+      while (true) {
+        final page = await classRef.collection('students').limit(pageSize).get();
+        if (page.docs.isEmpty) break;
+        final batch = FirebaseFirestore.instance.batch();
+        for (final d in page.docs) {
+          batch.delete(d.reference);
+        }
+        await batch.commit();
+        if (page.docs.length < pageSize) break;
+      }
+
+      // 2) Atualiza/remover materiais do professor que contenham esta turma
+      final mats = await FirebaseFirestore.instance
+          .collection('materials')
+          .where('ownerUid', isEqualTo: _uid) // garante permissão pelas regras
+          .where('classIds', arrayContains: cid)
+          .get();
+
+      for (final m in mats.docs) {
+        final data = m.data();
+        final ids = List<String>.from((data['classIds'] ?? const []));
+        final names = List<String>.from((data['classNames'] ?? const []));
+
+        final newIds = ids.where((x) => x != cid).toList();
+
+        // manter classNames alinhado, caso tenha o mesmo comprimento
+        List<String> newNames = names;
+        if (names.length == ids.length) {
+          newNames = [
+            for (int i = 0; i < ids.length; i++)
+              if (ids[i] != cid) names[i],
+          ];
+        }
+
+        if (newIds.isEmpty) {
+          await m.reference.delete(); // sem turma -> remove material
+        } else {
+          await m.reference.update({
+            'classIds': newIds,
+            'classNames': newNames,
+          });
+        }
+      }
+
+      // 3) Apaga o documento da turma
+      await classRef.delete();
+
+      if (mounted) {
+        _snack('Turma excluída e vínculos limpos.');
+      }
     } on FirebaseException catch (e) {
-      _snack('Erro ao excluir: ${e.code} — ${e.message}');
+      if (mounted) _snack('Erro ao excluir: ${e.code} — ${e.message}');
+    } catch (e) {
+      if (mounted) _snack('Erro ao excluir: $e');
     }
   }
 
-  // -------------------- GERENCIAR RAs (Lógica mantida para o menu de contexto) --------------------
+  // -------------------- GERENCIAR RAs (dialog com autocomplete) --------------------
 
   Future<void> _manageStudents(String classId) async {
     final raCtrl = TextEditingController();
@@ -134,32 +207,28 @@ class _ClassesPageState extends State<ClassesPage> {
     await showDialog(
       context: context,
       builder: (dialogCtx) {
-        // Estado local do diálogo (fora do StatefulBuilder, para persistir entre rebuilds do builder)
         List<String> suggestions = [];
         Timer? deb;
 
-        // Fallback: baixa um lote de users e filtra por prefixo no cliente — retorna lista.
+        // fallback de busca simples por prefixo
         Future<List<String>> _fallbackPrefix(String prefix) async {
           try {
             final snap2 = await FirebaseFirestore.instance
                 .collection('users')
                 .where('role', isEqualTo: 'aluno')
-                .limit(80) // lote pequeno
+                .limit(80)
                 .get();
 
             final lp = prefix.toLowerCase();
-            final list2 =
-                snap2.docs
-                    .map((d) => (d.data()['ra'] ?? '').toString())
-                    .where((ra) {
-                      final s = ra.toLowerCase();
-                      return s.isNotEmpty &&
-                          s.startsWith(lp) &&
-                          !ras.contains(ra);
-                    })
-                    .toSet()
-                    .toList()
-                  ..sort();
+            final list2 = snap2.docs
+                .map((d) => (d.data()['ra'] ?? '').toString())
+                .where((ra) {
+                  final s = ra.toLowerCase();
+                  return s.isNotEmpty && s.startsWith(lp) && !ras.contains(ra);
+                })
+                .toSet()
+                .toList()
+              ..sort();
 
             return list2;
           } catch (_) {
@@ -167,18 +236,14 @@ class _ClassesPageState extends State<ClassesPage> {
           }
         }
 
-        // Autocomplete principal: tenta índice (role + orderBy('ra')); se vazio/erro -> fallback.
         Future<void> _lookup(
           String prefix,
           void Function(void Function()) setDlg,
         ) async {
           final p = prefix.trim();
-
-          // zera sugestões assim que começa a digitar
           setDlg(() => suggestions = []);
           if (p.isEmpty) return;
 
-          // debounce
           deb?.cancel();
           deb = Timer(const Duration(milliseconds: 220), () async {
             try {
@@ -191,26 +256,20 @@ class _ClassesPageState extends State<ClassesPage> {
                   .limit(10)
                   .get();
 
-              final list =
-                  snap.docs
-                      .map((d) => (d.data()['ra'] ?? '').toString())
-                      .where((ra) => ra.isNotEmpty && !ras.contains(ra))
-                      .toSet()
-                      .toList()
-                    ..sort();
+              final list = snap.docs
+                  .map((d) => (d.data()['ra'] ?? '').toString())
+                  .where((ra) => ra.isNotEmpty && !ras.contains(ra))
+                  .toSet()
+                  .toList()
+                ..sort();
 
-              if (dialogCtx.mounted) {
-                setDlg(() => suggestions = list);
-              }
+              if (dialogCtx.mounted) setDlg(() => suggestions = list);
 
               if (list.isEmpty) {
                 final list2 = await _fallbackPrefix(p);
-                if (dialogCtx.mounted) {
-                  setDlg(() => suggestions = list2);
-                }
+                if (dialogCtx.mounted) setDlg(() => suggestions = list2);
               }
             } catch (_) {
-              // Sem índice tipos mistos -> fallback
               final list2 = await _fallbackPrefix(p);
               if (dialogCtx.mounted) {
                 setDlg(() => suggestions = list2);
@@ -218,7 +277,7 @@ class _ClassesPageState extends State<ClassesPage> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text(
-                        'Usando busca simples. Crie o índice composto (users: role Asc + ra Asc) para acelerar.',
+                        'Usando busca simples. Crie o índice (users: role Asc + ra Asc) para acelerar.',
                       ),
                       duration: Duration(seconds: 2),
                     ),
@@ -255,7 +314,6 @@ class _ClassesPageState extends State<ClassesPage> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Campo RA + autocomplete por prefixo
                   TextField(
                     controller: raCtrl,
                     keyboardType: TextInputType.number,
@@ -368,17 +426,14 @@ class _ClassesPageState extends State<ClassesPage> {
       return;
     }
     try {
-      final classRef = FirebaseFirestore.instance
-          .collection('classes')
-          .doc(classId);
+      final classRef =
+          FirebaseFirestore.instance.collection('classes').doc(classId);
 
-      // subcoleção: classes/{classId}/students/{ra}
       await classRef.collection('students').doc(ra).set({
         'addedAt': FieldValue.serverTimestamp(),
         'ra': ra,
       }, SetOptions(merge: true));
 
-      // array studentRAs na turma (útil para queries do aluno)
       await classRef.update({
         'studentRAs': FieldValue.arrayUnion([ra]),
       });
@@ -420,18 +475,6 @@ class _ClassesPageState extends State<ClassesPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-              }
-            },
-          ),
-        ],
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -457,7 +500,7 @@ class _ClassesPageState extends State<ClassesPage> {
                       const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          'Logado: $_email  (uid: $uidShort)',
+                          'Logado: $_email  (uid: $uidShort)',
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(color: Colors.white70),
                         ),
@@ -563,7 +606,7 @@ class _ClassesPageState extends State<ClassesPage> {
                               style: const TextStyle(color: Colors.white54),
                             ),
 
-                            // ALTERAÇÃO 2: Ação de clique atualizada para navegar para a nova página
+                            // Navegar para tela de gerenciamento
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -594,7 +637,7 @@ class _ClassesPageState extends State<ClassesPage> {
                                 } else if (v == 'addra') {
                                   await _manageStudents(d.id);
                                 } else if (v == 'delete') {
-                                  await _deleteClass(d.reference);
+                                  await _deleteClass(d.reference); // ✅
                                 }
                               },
                               itemBuilder: (ctx) => const [
