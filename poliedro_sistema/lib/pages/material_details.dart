@@ -35,18 +35,6 @@ class _MaterialDetailsPageState extends State<MaterialDetailsPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-              }
-            },
-          ),
-        ],
       ),
       body: Stack(
         fit: StackFit.expand,
