@@ -1,16 +1,17 @@
 // lib/pages/gerenciamento_turma_page.dart
-// CÓDIGO CORRIGIDO
+// COMPLETO — AppBar só com o botão "Voltar" (sem título)
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import necessário
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'alunos_da_turma_page.dart';
 import 'materiais_da_turma_page.dart';
 
 class GerenciamentoTurmaPage extends StatefulWidget {
   final String turmaId;
-  final String nomeTurma;
+  final String nomeTurma; // mantido caso você use em outros lugares da tela
 
   const GerenciamentoTurmaPage({
     super.key,
@@ -31,7 +32,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
   @override
   void initState() {
     super.initState();
-    _uid = FirebaseAuth.instance.currentUser!.uid; // Pega o UID do professor
+    _uid = FirebaseAuth.instance.currentUser!.uid;
     _fetchSummaryData();
   }
 
@@ -44,38 +45,122 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
           .count()
           .get();
 
-      // CORREÇÃO APLICADA AQUI:
-      // A consulta de contagem de materiais agora também filtra pelo UID do professor,
-      // assim como fizemos na página de listagem de materiais, para cumprir a regra de segurança.
       final materialSnapshot = await FirebaseFirestore.instance
           .collection('materials')
           .where('classIds', arrayContains: widget.turmaId)
-          .where(
-            'ownerUid',
-            isEqualTo: _uid,
-          ) // <-- LINHA ADICIONADA QUE CORRIGE O PROBLEMA
+          .where('ownerUid', isEqualTo: _uid) // garante regra de leitura
           .count()
           .get();
 
-      if (mounted) {
-        setState(() {
-          _studentCount = studentSnapshot.count;
-          _materialCount = materialSnapshot.count;
-          _isLoadingSummary = false;
-        });
-      }
+      if (!mounted) return;
+      setState(() {
+        _studentCount = studentSnapshot.count;
+        _materialCount = materialSnapshot.count;
+        _isLoadingSummary = false;
+      });
     } catch (e) {
-      print(
-        "Erro ao buscar resumo: $e",
-      ); // Adicionado um print para ajudar a depurar
-      if (mounted) {
-        setState(() {
-          _isLoadingSummary = false;
-          _studentCount = 0;
-          _materialCount = 0;
-        });
-      }
+      // ignore: avoid_print
+      print("Erro ao buscar resumo: $e");
+      if (!mounted) return;
+      setState(() {
+        _isLoadingSummary = false;
+        _studentCount = 0;
+        _materialCount = 0;
+      });
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        automaticallyImplyLeading: false, // remove seta padrão
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leadingWidth: 140,
+        leading: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.only(left: 8, top: 8, bottom: 8),
+            child: _BackPill(onTap: () => Navigator.maybePop(context)),
+          ),
+        ),
+        // Sem título aqui! (removemos o nome da matéria da AppBar)
+        title: null,
+      ),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Fundo
+          Container(
+            decoration: BoxDecoration(
+              image: const DecorationImage(
+                image: AssetImage('assets/images/poliedro.png'),
+                fit: BoxFit.cover,
+              ),
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF0B091B).withOpacity(.92),
+                  const Color(0xFF0B091B).withOpacity(.92),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              child: Column(
+                children: [
+                  const SizedBox(height: kToolbarHeight - 8),
+
+                  // Card de resumo — aqui mostramos o nome da turma no conteúdo (não no AppBar)
+                  _buildSummaryCard(),
+
+                  const SizedBox(height: 24),
+
+                  // Ações
+                  _ActionCard(
+                    icon: Icons.groups_2_outlined,
+                    title: 'Alunos Cadastrados',
+                    subtitle: 'Visualizar lista e gerenciar RAs da turma',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AlunosDaTurmaPage(
+                            turmaId: widget.turmaId,
+                            nomeTurma: widget.nomeTurma,
+                          ),
+                        ),
+                      ).then((_) => _fetchSummaryData());
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  _ActionCard(
+                    icon: Icons.folder_copy_outlined,
+                    title: 'Materiais da Turma',
+                    subtitle: 'Visualizar e enviar links ou arquivos',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MateriaisDaTurmaPage(
+                            turmaId: widget.turmaId,
+                            nomeTurma: widget.nomeTurma,
+                          ),
+                        ),
+                      ).then((_) => _fetchSummaryData());
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSummaryCard() {
@@ -94,7 +179,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.nomeTurma,
+            widget.nomeTurma, // título dentro do conteúdo
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -141,7 +226,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
                 ),
               )
             : Text(
-                value?.toString() ?? '0',
+                (value ?? 0).toString(),
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 22,
@@ -155,94 +240,10 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
       ],
     );
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        title: Text(
-          widget.nomeTurma,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              image: const DecorationImage(
-                image: AssetImage('assets/images/poliedro.png'),
-                fit: BoxFit.cover,
-              ),
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF0B091B).withOpacity(.92),
-                  const Color(0xFF0B091B).withOpacity(.92),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-              child: Column(
-                children: [
-                  const SizedBox(height: kToolbarHeight),
-                  _buildSummaryCard(),
-                  const SizedBox(height: 24),
-                  _ActionCard(
-                    icon: Icons.groups_2_outlined,
-                    title: 'Alunos Cadastrados',
-                    subtitle: 'Visualizar lista e gerenciar RAs da turma',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => AlunosDaTurmaPage(
-                            turmaId: widget.turmaId,
-                            nomeTurma: widget.nomeTurma,
-                          ),
-                        ),
-                      ).then((_) => _fetchSummaryData());
-                    },
-                  ),
-                  const SizedBox(height: 16),
-                  _ActionCard(
-                    icon: Icons.folder_copy_outlined,
-                    title: 'Materiais da Turma',
-                    subtitle: 'Visualizar e enviar links ou arquivos',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => MateriaisDaTurmaPage(
-                            turmaId: widget.turmaId,
-                            nomeTurma: widget.nomeTurma,
-                          ),
-                        ),
-                      ).then((_) => _fetchSummaryData());
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-/* ========================= UI Helpers (mantidos como estavam) ========================= */
+/* ========================= UI Helpers ========================= */
+
 class _Glass extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -354,6 +355,34 @@ class _ActionCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Botão "Voltar" estilo pílula (substitui a seta padrão do AppBar)
+class _BackPill extends StatelessWidget {
+  final VoidCallback onTap;
+  const _BackPill({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: const Icon(
+        Icons.arrow_back_ios_new_rounded,
+        color: Colors.white,
+        size: 18,
+      ),
+      label: const Text(
+        'Voltar',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(.10),
+        side: const BorderSide(color: Colors.white24),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
     );
   }
