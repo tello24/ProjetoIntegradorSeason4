@@ -8,6 +8,8 @@ import 'classes_page.dart';
 import 'materials_page.dart';
 import 'select_student_page.dart';
 import 'activities_page.dart';
+// NOVO: importa a planilha manual
+import 'prof_planilha_manual.dart';
 
 class ProfHome extends StatefulWidget {
   const ProfHome({super.key});
@@ -208,9 +210,10 @@ class _ProfHomeState extends State<ProfHome> {
                                   icon: Icons.calculate_outlined,
                                   title: 'Atividades & Notas',
                                   subtitle: 'Cadastrar e lançar',
+                                  // ALTERADO: abre a planilha manual
                                   onTap: () => Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => const ActivitiesPage()),
+                                    MaterialPageRoute(builder: (_) => const ProfPlanilhaManualPage()),
                                   ),
                                 ),
                                 _ActionCard(
