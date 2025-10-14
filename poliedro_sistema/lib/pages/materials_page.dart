@@ -819,18 +819,18 @@ class _MaterialsPageState extends State<MaterialsPage> {
           ),
         ),
 
-        actions: [
-          IconButton(
-            tooltip: 'Sair',
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              if (mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
-              }
-            },
-          ),
-        ],
+        // actions: [
+        //   IconButton(
+        //     tooltip: 'Sair',
+        //     icon: const Icon(Icons.logout, color: Colors.white),
+        //     onPressed: () async {
+        //       await FirebaseAuth.instance.signOut();
+        //       if (mounted) {
+        //         Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+        //       }
+        //     },
+        //   ),
+        // ],
       ),
       body: Stack(
         fit: StackFit.expand,
@@ -905,29 +905,77 @@ class _MaterialsPageState extends State<MaterialsPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(
-                                children: [
-                                  const Icon(
-                                    Icons.groups_2_outlined,
-                                    size: 18,
-                                    color: Colors.white70,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Compartilhar com turmas',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(color: Colors.white),
-                                  ),
-                                  const Spacer(),
-                                  FilledButton.icon(
-                                    onPressed: _busy ? null : _pickClasses,
-                                    icon: const Icon(Icons.list_alt),
-                                    label: const Text('Selecionar turmas'),
-                                  ),
-                                ],
+                              LayoutBuilder(
+                                builder: (ctx, constraints) {
+                                  final isCompact =
+                                      constraints.maxWidth <
+                                      420; // celular/coluna estreita
+                                  final title = Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.groups_2_outlined,
+                                        size: 18,
+                                        color: Colors.white70,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Compartilhar com turmas',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleSmall
+                                            ?.copyWith(color: Colors.white),
+                                      ),
+                                    ],
+                                  );
+
+                                  final button = FittedBox(
+                                    fit: BoxFit
+                                        .scaleDown, // permite encolher sem estourar
+                                    child: FilledButton.icon(
+                                      onPressed: _busy ? null : _pickClasses,
+                                      icon: const Icon(Icons.list_alt),
+                                      label: Text(
+                                        isCompact
+                                            ? 'Selecionar'
+                                            : 'Selecionar turmas',
+                                      ),
+                                      style: FilledButton.styleFrom(
+                                        minimumSize: const Size(
+                                          0,
+                                          40,
+                                        ), // altura consistente; largura livre
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+
+                                  if (isCompact) {
+                                    // Celular: quebra em 2 linhas bonitinho
+                                    return Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      alignment: WrapAlignment.spaceBetween,
+                                      crossAxisAlignment:
+                                          WrapCrossAlignment.center,
+                                      children: [title, button],
+                                    );
+                                  }
+
+                                  // Largura confortável: linha única tradicional
+                                  return Row(
+                                    children: [
+                                      title,
+                                      const Spacer(),
+                                      SizedBox(height: 40, child: button),
+                                    ],
+                                  );
+                                },
                               ),
+
                               const SizedBox(height: 8),
                               if (_selectedClassIds.isEmpty)
                                 const Text(
@@ -1446,17 +1494,16 @@ class _BackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
+    return TextButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-      label: const Text('Voltar'),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.white.withOpacity(.12),
-        elevation: 0,
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+      label: const Text('Voltar',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(.10),
         side: const BorderSide(color: Colors.white24),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
     );
   }
