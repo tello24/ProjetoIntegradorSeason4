@@ -7,8 +7,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/confirm_signout.dart';
 import 'select_professor_page.dart';
-import 'select_class_for_grades_page.dart';
 import 'aluno_turmas_page.dart'; // Import da nova página de turmas
+import 'aluno_notas_page.dart';  // <<--- NOVO: página de notas (somente leitura, 3 bimestres)
 
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
@@ -26,10 +26,10 @@ class _AlunoHomeState extends State<AlunoHome> {
     _userFuture = uid == null
         ? Future.value(null)
         : FirebaseFirestore.instance
-              .collection('users')
-              .doc(uid)
-              .get()
-              .then((d) => d.data());
+            .collection('users')
+            .doc(uid)
+            .get()
+            .then((d) => d.data());
   }
 
   @override
@@ -215,13 +215,12 @@ class _AlunoHomeState extends State<AlunoHome> {
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
                                   SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: cols,
-                                    crossAxisSpacing: 12,
-                                    mainAxisSpacing: 12,
-                                    childAspectRatio: cols == 1
-                                        ? 14 / 5
-                                        : 14 / 6,
-                                  ),
+                                crossAxisCount: cols,
+                                crossAxisSpacing: 12,
+                                mainAxisSpacing: 12,
+                                childAspectRatio:
+                                    cols == 1 ? 14 / 5 : 14 / 6,
+                              ),
                               children: [
                                 _ActionCard(
                                   icon: Icons.groups_2_outlined,
@@ -255,15 +254,16 @@ class _AlunoHomeState extends State<AlunoHome> {
                                     ),
                                   ),
                                 ),
+
+                                // ====== ALTERADO: agora abre a nova tela de notas por bimestre ======
                                 _ActionCard(
-                                  icon: Icons.fact_check_outlined,
-                                  title: 'Notas por matéria',
-                                  subtitle: 'Acompanhe suas avaliações',
+                                  icon: Icons.bar_chart_rounded,
+                                  title: 'Minhas Notas',
+                                  subtitle: 'Veja por bimestre',
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (_) =>
-                                          const SelectClassForGradesPage(),
+                                      builder: (_) => const AlunoNotasPage(),
                                     ),
                                   ),
                                 ),
