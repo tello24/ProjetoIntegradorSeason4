@@ -505,17 +505,16 @@ class _BackButton extends StatelessWidget {
   const _BackButton({required this.onTap});
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton.icon(
+    return TextButton.icon(
       onPressed: onTap,
-      icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
-      label: const Text('Voltar'),
-      style: ElevatedButton.styleFrom(
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.white.withOpacity(.12),
-        elevation: 0,
+      icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+      label: const Text('Voltar',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white.withOpacity(.10),
         side: const BorderSide(color: Colors.white24),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       ),
     );
   }
