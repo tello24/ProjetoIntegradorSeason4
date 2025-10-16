@@ -391,13 +391,14 @@ class _ProfPlanilhaManualPageState extends State<ProfPlanilhaManualPage>
   }
 
   num _customRound(num v) {
-    final base = v.floor();
-    final frac = v - base;
-    if (frac < 0.35) return base;
-    if (frac < 0.50) return base + 0.5;
-    if (frac < 0.75) return double.parse(v.toStringAsFixed(2));
-    return base + 1;
-  }
+  // arredonda para o múltiplo de 0,5 mais próximo
+  final r = (v * 2).round() / 2.0;
+  // mantém dentro de 0..10 por segurança
+  if (r < 0) return 0;
+  if (r > 10) return 10;
+  return r;
+}
+
 
   num _finalOf(String ra) {
     final e = _entries[ra];
@@ -1023,14 +1024,14 @@ class _ScoreFieldState extends State<_ScoreField> {
   @override
   void initState() {
     super.initState();
-    _c = TextEditingController(text: _fmtLocal(widget.value));
+    _c = TextEditingController(text: _fmtHalf(widget.value));
     _lastText = _c.text;
   }
 
   @override
   void didUpdateWidget(covariant _ScoreField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final now = _fmtLocal(widget.value);
+    final now = _fmtHalf(widget.value);
     if (_lastText != now && _c.text != now) {
       _c.text = now;
       _lastText = now;
@@ -1043,11 +1044,30 @@ class _ScoreFieldState extends State<_ScoreField> {
     super.dispose();
   }
 
-  static String _fmtLocal(num v) {
-    if (v % 1 == 0) return v.toStringAsFixed(0);
-    final s2 = v.toStringAsFixed(2);
-    if (s2.endsWith('0')) return v.toStringAsFixed(1);
-    return s2;
+  // formata para 0,5 (ex.: 7 -> "7", 7.25 -> "7.5")
+  static String _fmtHalf(num v) {
+    final snapped = (v * 2).round() / 2.0;
+    final hasHalf = (snapped * 2).round() % 2 != 0; // true se termina em .5
+    return hasHalf ? snapped.toStringAsFixed(1) : snapped.toStringAsFixed(0);
+  }
+
+  void _applyAndNotify(double parsed) {
+    // clamp e snap para 0,5
+    double clamped = parsed.clamp(0, 10);
+    double half = (clamped * 2).round() / 2.0;
+
+    // atualiza texto já formatado
+    final fixed = _fmtHalf(half);
+    if (_c.text != fixed) {
+      _c.value = _c.value.copyWith(
+        text: fixed,
+        selection: TextSelection.collapsed(offset: fixed.length),
+      );
+    }
+    _lastText = _c.text;
+
+    // notifica com valor “meio a meio”
+    widget.onChanged(half);
   }
 
   @override
@@ -1062,6 +1082,7 @@ class _ScoreFieldState extends State<_ScoreField> {
         style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
+          // deixa digitar até 2 dígitos e 1 decimal (a gente snapa para .0 ou .5)
           FilteringTextInputFormatter.allow(RegExp(r'^\d{0,2}([.,]\d{0,2})?$')),
         ],
         decoration: InputDecoration(
@@ -1092,20 +1113,19 @@ class _ScoreFieldState extends State<_ScoreField> {
             _lastText = txt;
             return;
           }
-          final clamped = parsed < 0 ? 0 : (parsed > 10 ? 10 : parsed);
-          if (clamped != parsed) {
-            final fixed = _fmtLocal(clamped);
-            if (_c.text != fixed) {
-              _c.value = _c.value.copyWith(text: fixed, selection: TextSelection.collapsed(offset: fixed.length));
-            }
-          }
-          _lastText = _c.text;
-          widget.onChanged(clamped);
+          _applyAndNotify(parsed);
+        },
+        onEditingComplete: () {
+          // ao finalizar a edição, força o snap também
+          final s = _c.text.replaceAll(',', '.').trim();
+          final parsed = double.tryParse(s);
+          if (parsed != null) _applyAndNotify(parsed);
         },
       ),
     );
   }
 }
+
 
 /* ===== Estatística esparsa ===== */
 class _SparseStats {
