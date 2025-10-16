@@ -259,7 +259,7 @@ class _AlunoHomeState extends State<AlunoHome> {
                                 _ActionCard(
                                   icon: Icons.bar_chart_rounded,
                                   title: 'Minhas Notas',
-                                  subtitle: 'Veja por bimestre',
+                                  subtitle: 'Veja por trimestre',
                                   onTap: () => Navigator.push(
                                     context,
                                     MaterialPageRoute(
