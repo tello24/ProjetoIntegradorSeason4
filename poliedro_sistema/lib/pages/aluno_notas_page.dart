@@ -78,14 +78,22 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
     return semAtividadesReais && (t.prova == 0);
   }
 
-  num _customRound(num v) {
-    final base = v.floor();
-    final frac = v - base;
-    if (frac < 0.35) return base;
-    if (frac < 0.50) return base + 0.5;
-    if (frac < 0.75) return double.parse(v.toStringAsFixed(2));
-    return base + 1;
-  }
+ num _customRound(num v) {
+  // múltiplo de 0,5 mais próximo
+  final r = (v * 2).round() / 2.0;
+  // garante 0..10
+  if (r < 0) return 0;
+  if (r > 10) return 10;
+  return r;
+}
+
+num _snapHalf(num v) {
+  final r = (v * 2).round() / 2.0;
+  if (r < 0) return 0;
+  if (r > 10) return 10;
+  return r;
+}
+
 
   num _finalRounded(_EntryView e) {
     final termos = <String, _Term>{'t1': e.t1, 't2': e.t2, 't3': e.t3};
@@ -102,11 +110,11 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
   }
 
   String _fmt(num v) {
-    if (v % 1 == 0) return v.toStringAsFixed(0);
-    final s2 = v.toStringAsFixed(2);
-    if (s2.endsWith('0')) return v.toStringAsFixed(1);
-    return s2;
-  }
+  final h = _snapHalf(v); // trava em 0,5 antes de mostrar
+  if (h % 1 == 0) return h.toStringAsFixed(0); // 7
+  return h.toStringAsFixed(1);                  // 7.5
+}
+
 
   // =============================== UI ===============================
 
@@ -161,32 +169,52 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
   ],
 
   bottom: PreferredSize(
-    preferredSize: const Size.fromHeight(56),
-    child: Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: _Glass(
-        radius: 14,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        child: Theme(
-          data: Theme.of(context).copyWith(
-            tabBarTheme: const TabBarThemeData(
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white60,
-              indicatorColor: Colors.white,
+  preferredSize: const Size.fromHeight(56),
+  child: Center(
+    child: ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 900), // <<< largura máxima
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: _Glass(
+          radius: 14,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              tabBarTheme: const TabBarThemeData(
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white60,
+                indicatorColor: Colors.white,
+              ),
             ),
-          ),
-          child: TabBar(
-            onTap: (i) => setState(() => _tabIndex = i),
-            tabs: const [
-              Tab(text: 'Trimestre 1'),
-              Tab(text: 'Trimestre 2'),
-              Tab(text: 'Trimestre 3'),
-            ],
+            child: TabBar(
+  // não rolável = as 3 abas ocupam toda a largura disponível do container
+  isScrollable: false,
+  onTap: (i) => setState(() => _tabIndex = i),
+
+  // um respiro nas bordas da barra
+  padding: const EdgeInsets.symmetric(horizontal: 16),
+
+  // remove a divisória feia entre abas (Flutter 3.10+)
+  dividerColor: Colors.transparent,
+
+  // deixa a “underline” mais elegante
+  indicatorSize: TabBarIndicatorSize.tab,
+  indicatorWeight: 2,
+
+  tabs: const [
+    Tab(text: 'Trimestre 1'),
+    Tab(text: 'Trimestre 2'),
+    Tab(text: 'Trimestre 3'),
+  ],
+),
+
           ),
         ),
       ),
     ),
   ),
+),
+
 ),
 
         body: Stack(
@@ -336,7 +364,7 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
   // ---------- Views ----------
 
   Widget _buildTrimView(_Term t, _EntryView e) {
-    final mTrim = _termAvg(t);
+    final mTrim = _snapHalf(_termAvg(t));
     final mFinal = _finalRounded(e);
 
     return ListView(
