@@ -224,7 +224,7 @@ class _AlunoHomeState extends State<AlunoHome> {
                               children: [
                                 _ActionCard(
                                   icon: Icons.groups_2_outlined,
-                                  title: 'Minhas Turmas',
+                                  title: 'Minhas Materias',
                                   subtitle: 'Ver materiais e atividades',
                                   onTap: () => Navigator.push(
                                     context,
