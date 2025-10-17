@@ -1,9 +1,4 @@
 # 📱 Projeto Integrador - Season 4
-
-![Dart](https://img.shields.io/badge/Dart-3.x-blue)
-![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B)
-![Firebase](https://img.shields.io/badge/Firebase-backend-orange)
-
 ---
 
 ## 📌 Visão Geral
@@ -30,13 +25,15 @@ Este repositório contém o desenvolvimento do **Projeto Integrador Season 4**, 
 ### ✅ Pré-requisitos
 Antes de iniciar, você precisa ter instalado em sua máquina:
 
-* [Flutter SDK](https://docs.flutter.dev/get-started/install)
-* [Dart SDK](https://dart.dev/get-dart)
-* [Firebase CLI](https://firebase.google.com/docs/cli)
-* [Git](https://git-scm.com/)
-* [Android Studio](https://developer.android.com/studio)
-* [Java JDK 17](https://adoptium.net/)
-* [FlutterFire CLI](https://firebase.flutter.dev/docs/cli/)
+* [Flutter SDK](https://docs.flutter.dev/get-started/install)  [![Flutter SDK](https://img.shields.io/badge/Flutter-SDK-02569B?logo=flutter\&logoColor=white)](https://docs.flutter.dev/get-started/install)
+* [Dart SDK](https://dart.dev/get-dart)  [![Dart SDK](https://img.shields.io/badge/Dart-SDK-0175C2?logo=dart\&logoColor=white)](https://dart.dev/get-dart)
+* [Firebase CLI](https://firebase.google.com/docs/cli)  [![Firebase CLI](https://img.shields.io/badge/Firebase-CLI-FFCA28?logo=firebase\&logoColor=black)](https://firebase.google.com/docs/cli)
+* [Git](https://git-scm.com/)  [![Git](https://img.shields.io/badge/Git-latest-F05032?logo=git\&logoColor=white)](https://git-scm.com/)
+* [Android Studio](https://developer.android.com/studio)  [![Android Studio](https://img.shields.io/badge/Android%20Studio-latest-3DDC84?logo=android-studio\&logoColor=white)](https://developer.android.com/studio)
+* [Java JDK 17](https://adoptium.net/)  [![Java JDK 17](https://img.shields.io/badge/Java-JDK%2017-007396?logo=openjdk\&logoColor=white)](https://adoptium.net/)
+* [FlutterFire CLI](https://firebase.flutter.dev/docs/cli/)  [![FlutterFire CLI](https://img.shields.io/badge/FlutterFire-CLI-FFCA28?logo=firebase\&logoColor=black)](https://firebase.flutter.dev/docs/cli/)
+* [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)  [![Android SDK Platform-Tools](https://img.shields.io/badge/Android%20SDK-Platform--Tools-3DDC84?logo=android\&logoColor=white)](https://developer.android.com/tools/releases/platform-tools)
+
 
 
 ---
