@@ -29,10 +29,15 @@ Este repositório contém o desenvolvimento do **Projeto Integrador Season 4**, 
 
 ### ✅ Pré-requisitos
 Antes de iniciar, você precisa ter instalado em sua máquina:
-- [Flutter SDK](https://docs.flutter.dev/get-started/install)  
-- [Dart SDK](https://dart.dev/get-dart)  
-- [Firebase CLI](https://firebase.google.com/docs/cli)  
-- [Git](https://git-scm.com/)  
+
+* [Flutter SDK](https://docs.flutter.dev/get-started/install)
+* [Dart SDK](https://dart.dev/get-dart)
+* [Firebase CLI](https://firebase.google.com/docs/cli)
+* [Git](https://git-scm.com/)
+* [Android Studio](https://developer.android.com/studio)
+* [Java JDK 17](https://adoptium.net/)
+* [FlutterFire CLI](https://firebase.flutter.dev/docs/cli/)
+
 
 ---
 
@@ -74,5 +79,27 @@ Se o Firebase não conectar: confira se o arquivo google-services.json (Android)
 Rode flutter clean e depois flutter pub get se ocorrerem erros de cache.
 
 ### 📁 Estrutura do Projeto
-ProjetoIntegradorSeason4/
+ProjetoIntegradorSeason4/sistema_poliedro
+lib/
+  main.dart
+  firebase_options.dart
+  pages/
+    start_page.dart
+    login_page.dart
+    register_page.dart
+    prof_home.dart
+    aluno_home.dart
+    materials_page.dart
+    material_details.dart
+    classes_page.dart
+    select_student_page.dart
+    activities_page.dart
+    aluno_notas_page.dart
+    chat_page.dart
+  widgets/
+    unread_badge.dart         
+  utils/
+    open_inline_web.dart      
+    confirm_signout.dart
+
 
