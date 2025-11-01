@@ -1,4 +1,5 @@
 // lib/pages/aluno_home.dart
+// CÓDIGO FINAL COM LAYOUT 2x2, BOTÕES MAIORES E ESPAÇAMENTO AJUSTADO
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -7,8 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../utils/confirm_signout.dart';
 import 'select_professor_page.dart';
-import 'aluno_turmas_page.dart'; // Import da nova página de turmas
-import 'aluno_notas_page.dart';  // <<--- NOVO: página de notas (somente leitura, 3 bimestres)
+import 'aluno_turmas_page.dart'; 
+import 'aluno_notas_page.dart';
 
 class AlunoHome extends StatefulWidget {
   const AlunoHome({super.key});
@@ -119,9 +120,6 @@ class _AlunoHomeState extends State<AlunoHome> {
               SafeArea(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
-                    final w = constraints.maxWidth;
-                    final cols = w >= 1000 ? 3 : (w >= 640 ? 2 : 1);
-
                     return Center(
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1100),
@@ -130,10 +128,7 @@ class _AlunoHomeState extends State<AlunoHome> {
                           children: [
                             _Glass(
                               padding: const EdgeInsets.fromLTRB(
-                                18,
-                                14,
-                                18,
-                                14,
+                                18, 14, 18, 14,
                               ),
                               radius: 18,
                               child: Row(
@@ -208,62 +203,66 @@ class _AlunoHomeState extends State<AlunoHome> {
                                 ],
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            GridView(
-                              padding: EdgeInsets.zero,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: cols,
-                                crossAxisSpacing: 12,
-                                mainAxisSpacing: 12,
-                                childAspectRatio:
-                                    cols == 1 ? 14 / 5 : 14 / 6,
-                              ),
+                            
+                            // --- MODIFICAÇÃO DO ESPAÇAMENTO ---
+                            const SizedBox(height: 40), // <<< ESPAÇAMENTO AUMENTADO
+                            // --- FIM DA MODIFICAÇÃO ---
+                            
+                            Row(
                               children: [
-                                _ActionCard(
-                                  icon: Icons.groups_2_outlined,
-                                  title: 'Minhas Materias',
-                                  subtitle: 'Ver materiais e atividades',
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const AlunoTurmasPage(),
+                                Expanded(
+                                  child: _HomeButton(
+                                    label: 'Minhas Materias',
+                                    icon: Icons.groups_2_outlined,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const AlunoTurmasPage(),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                _ActionCard(
-                                  icon: Icons.folder_copy_outlined,
-                                  title: 'Meus materiais',
-                                  subtitle: 'Arquivos e links compartilhados',
-                                  onTap: () => Navigator.pushNamed(
-                                    context,
-                                    '/materials',
-                                  ),
-                                ),
-                                _ActionCard(
-                                  icon: Icons.chat_bubble_outline,
-                                  title: 'Mensagens',
-                                  subtitle: 'Converse com professores',
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const SelectProfessorPage(),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _HomeButton(
+                                    label: 'Meus materiais',
+                                    icon: Icons.folder_copy_outlined,
+                                    onTap: () => Navigator.pushNamed(
+                                      context,
+                                      '/materials',
                                     ),
                                   ),
                                 ),
+                              ],
+                            ),
+                            
+                            const SizedBox(height: 12),
 
-                                // ====== ALTERADO: agora abre a nova tela de notas por bimestre ======
-                                _ActionCard(
-                                  icon: Icons.bar_chart_rounded,
-                                  title: 'Minhas Notas',
-                                  subtitle: 'Veja por trimestre',
-                                  onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => const AlunoNotasPage(),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _HomeButton(
+                                    label: 'Mensagens',
+                                    icon: Icons.chat_bubble_outline,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const SelectProfessorPage(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _HomeButton(
+                                    label: 'Minhas Notas',
+                                    icon: Icons.bar_chart_rounded,
+                                    onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const AlunoNotasPage(),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -327,75 +326,49 @@ class _Glass extends StatelessWidget {
   }
 }
 
-class _ActionCard extends StatelessWidget {
+// --- BOTÃO GRANDE (VERTICAL) ---
+class _HomeButton extends StatelessWidget {
+  final String label;
   final IconData icon;
-  final String title;
-  final String subtitle;
   final VoidCallback onTap;
-  const _ActionCard({
+
+  const _HomeButton({
+    required this.label,
     required this.icon,
-    required this.title,
-    required this.subtitle,
     required this.onTap,
   });
+
   @override
   Widget build(BuildContext context) {
     return _Glass(
       radius: 18,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 40), 
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
-        child: Row(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 64,
+              height: 64,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 gradient: const LinearGradient(
                   colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
                 ),
               ),
-              child: Icon(icon, color: Colors.white),
+              child: Icon(icon, color: Colors.white, size: 36),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 12.5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(.10),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white12),
-              ),
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 16,
+            const SizedBox(height: 16),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
                 color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 17,
               ),
             ),
           ],

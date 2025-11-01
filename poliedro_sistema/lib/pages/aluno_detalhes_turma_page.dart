@@ -1,8 +1,10 @@
 // lib/pages/aluno_detalhes_turma_page.dart
+// CÓDIGO CORRIGIDO (onTap de Notas) E ESTILIZADO (Botões Maiores)
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'materiais_da_turma_page.dart';
+import 'aluno_notas_da_turma_page.dart'; 
 
 class AlunoDetalhesTurmaPage extends StatelessWidget {
   final String turmaId;
@@ -61,16 +63,21 @@ class AlunoDetalhesTurmaPage extends StatelessWidget {
                     icon: Icons.calculate_outlined,
                     title: 'Ver Atividades e Notas',
                     subtitle: 'Acompanhar avaliações da matéria',
+                    
+                    // --- CORREÇÃO APLICADA AQUI ---
                     onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Funcionalidade de atividades e notas em breve!',
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AlunoNotasDaTurmaPage(
+                            turmaId: turmaId,
+                            nomeTurma: nomeTurma,
                           ),
-                          backgroundColor: Colors.orange,
                         ),
                       );
                     },
+                    // --- FIM DA CORREÇÃO ---
+
                   ),
                 ],
               ),
@@ -114,6 +121,7 @@ class _Glass extends StatelessWidget {
   }
 }
 
+// --- ESTILIZAÇÃO APLICADA AQUI ---
 class _ActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -129,22 +137,22 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _Glass(
       radius: 18,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // Padding vertical aumentado
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Row(
           children: [
             Container(
-              width: 46,
-              height: 46,
+              width: 50,  // Aumentado de 46 para 50
+              height: 50, // Aumentado de 46 para 50
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 gradient: const LinearGradient(
                   colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
                 ),
               ),
-              child: Icon(icon, color: Colors.white),
+              child: Icon(icon, color: Colors.white, size: 26), // Ícone levemente maior
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -157,7 +165,7 @@ class _ActionCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
-                      fontSize: 16,
+                      fontSize: 17, // Aumentado de 16 para 17
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -165,7 +173,7 @@ class _ActionCard extends StatelessWidget {
                     subtitle,
                     style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 12.5,
+                      fontSize: 13, // Aumentado de 12.5 para 13
                     ),
                   ),
                 ],
@@ -191,6 +199,8 @@ class _ActionCard extends StatelessWidget {
     );
   }
 }
+// --- FIM DA ESTILIZAÇÃO ---
+
 
 class _Bg extends StatelessWidget {
   const _Bg();
