@@ -205,7 +205,7 @@ class _AlunoHomeState extends State<AlunoHome> {
                             ),
                             
                             // --- MODIFICAÇÃO DO ESPAÇAMENTO ---
-                            const SizedBox(height: 40), // <<< ESPAÇAMENTO AUMENTADO
+                            const SizedBox(height: 40),
                             // --- FIM DA MODIFICAÇÃO ---
                             
                             Row(
