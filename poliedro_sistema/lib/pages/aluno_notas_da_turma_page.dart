@@ -6,7 +6,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-// Copiando estruturas e lógica de cálculo da aluno_notas_page.dart
 class _Term {
   final List<num> atividades;
   final num prova;
@@ -183,8 +182,8 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
         extendBodyBehindAppBar: true,
         appBar: AppBar(
           centerTitle: true, 
-          title: Padding( // <<< 1. ENVOLVA O TEXT COM UM PADDING
-            padding: const EdgeInsets.only(top:0), // <<< 2. ADICIONE O ESPAÇAMENTO NO TOPO
+          title: Padding( 
+            padding: const EdgeInsets.only(top:0), 
             child: Text(
               'Notas de ${widget.nomeTurma}',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
@@ -195,7 +194,7 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
           leading: _BackButton(onTap: () => Navigator.maybePop(context)),
           leadingWidth: 136,
           automaticallyImplyLeading: false,
-          actions: [ // <<< 2. ADICIONE ESTE BLOCO
+          actions: [ 
             SizedBox(width: 136),
           ],
           bottom: PreferredSize(
@@ -204,7 +203,6 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 900),
                 child: Padding(
-                  // Padding da TabBar (igual ao original)
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 10), 
                   child: _Glass(
                     radius: 14,
@@ -246,8 +244,7 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
                   child: Padding(
-                    // Padding principal (MODIFICADO)
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16), // <<< VALOR DO TOPO ALTERADO DE 8 PARA 16
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16), 
                     child: Column( 
                       children: [
                         Expanded(
@@ -306,7 +303,6 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
     final mFinal = _finalRounded(e);
 
     return ListView(
-      // Padding do ListView (igual ao original)
       padding: const EdgeInsets.all(10), 
       children: [
         _Glass(
@@ -466,7 +462,7 @@ class _Glass extends StatelessWidget {
         filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF121022).withOpacity(.18), // Cor do Glass da aluno_notas_page
+            color: const Color(0xFF121022).withOpacity(.18), 
             borderRadius: BorderRadius.circular(radius),
             border: Border.all(color: Colors.white.withOpacity(.10)),
             boxShadow: const [
