@@ -1,7 +1,6 @@
 // lib/pages/classes_page.dart
-// CÓDIGO COMPLETO E ATUALIZADO (exclusão em cascata da turma)
 
-import 'dart:ui' as ui; // para BackdropFilter.blur
+import 'dart:ui' as ui; 
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -58,7 +57,7 @@ class _ClassesPageState extends State<ClassesPage> {
     try {
       await FirebaseFirestore.instance.collection('classes').add({
         'name': name,
-        'ownerUid': _uid, // ✅ obrigatório pelas regras
+        'ownerUid': _uid, 
         'ownerEmail': _email,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -109,7 +108,6 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
-  /// ✅ EXCLUSÃO EM CASCATA
   Future<void> _deleteClass(DocumentReference classRef) async {
     final cid = classRef.id;
 
@@ -148,7 +146,7 @@ class _ClassesPageState extends State<ClassesPage> {
       // 2) Atualiza/remover materiais do professor que contenham esta turma
       final mats = await FirebaseFirestore.instance
           .collection('materials')
-          .where('ownerUid', isEqualTo: _uid) // garante permissão pelas regras
+          .where('ownerUid', isEqualTo: _uid) 
           .where('classIds', arrayContains: cid)
           .get();
 
@@ -159,7 +157,7 @@ class _ClassesPageState extends State<ClassesPage> {
 
         final newIds = ids.where((x) => x != cid).toList();
 
-        // manter classNames alinhado, caso tenha o mesmo comprimento
+        // manter classNames alinhado
         List<String> newNames = names;
         if (names.length == ids.length) {
           newNames = [
@@ -169,7 +167,7 @@ class _ClassesPageState extends State<ClassesPage> {
         }
 
         if (newIds.isEmpty) {
-          await m.reference.delete(); // sem turma -> remove material
+          await m.reference.delete();
         } else {
           await m.reference.update({
             'classIds': newIds,
@@ -191,7 +189,7 @@ class _ClassesPageState extends State<ClassesPage> {
     }
   }
 
-  // -------------------- GERENCIAR RAs (dialog com autocomplete) --------------------
+  // -------------------- GERENCIAR RAs --------------------
 
   Future<void> _manageStudents(String classId) async {
     final raCtrl = TextEditingController();
@@ -210,7 +208,6 @@ class _ClassesPageState extends State<ClassesPage> {
         List<String> suggestions = [];
         Timer? deb;
 
-        // fallback de busca simples por prefixo
         Future<List<String>> _fallbackPrefix(String prefix) async {
           try {
             final snap2 = await FirebaseFirestore.instance
@@ -485,7 +482,6 @@ class _ClassesPageState extends State<ClassesPage> {
             children: [
               const SizedBox(height: kToolbarHeight + 6),
 
-              // Header com usuário
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
                 child: _Glass(
@@ -510,7 +506,6 @@ class _ClassesPageState extends State<ClassesPage> {
                 ),
               ),
 
-              // Criar turma
               Padding(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
                 child: Row(
@@ -535,7 +530,6 @@ class _ClassesPageState extends State<ClassesPage> {
                 ),
               ),
 
-              // Lista de turmas
               Expanded(
                 child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                   stream: stream,
@@ -606,7 +600,6 @@ class _ClassesPageState extends State<ClassesPage> {
                               style: const TextStyle(color: Colors.white54),
                             ),
 
-                            // Navegar para tela de gerenciamento
                             onTap: () {
                               Navigator.push(
                                 context,
@@ -637,7 +630,7 @@ class _ClassesPageState extends State<ClassesPage> {
                                 } else if (v == 'addra') {
                                   await _manageStudents(d.id);
                                 } else if (v == 'delete') {
-                                  await _deleteClass(d.reference); // ✅
+                                  await _deleteClass(d.reference); 
                                 }
                               },
                               itemBuilder: (ctx) => const [
@@ -680,7 +673,7 @@ class _ClassesPageState extends State<ClassesPage> {
     );
   }
 
-  // ---------- helpers UI ----------
+  // ---------- UI ----------
 
   InputDecoration _decDark(String hint, {IconData? icon}) {
     return InputDecoration(
