@@ -15,7 +15,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
   late final String _uid;
   Stream<QuerySnapshot<Map<String, dynamic>>>? _stream;
 
-  String? _filterClassId; // filtro opcional por turma
+  String? _filterClassId; 
 
   @override
   void initState() {
@@ -263,7 +263,6 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
     );
     if (ok != true) return;
 
-    // apaga a activity e as notas ligadas (grades.activityRef == ref)
     final batch = FirebaseFirestore.instance.batch();
     final grades = await FirebaseFirestore.instance
         .collection('grades')
@@ -294,7 +293,6 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
       ),
       body: Column(
         children: [
-          // Filtro por Turma
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
             child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
@@ -386,7 +384,7 @@ class _ActivitiesPageState extends State<ActivitiesPage> {
                                     builder: (_) => GradesPage(
                                       activityRef: d.reference,
                                       activityData:
-                                          data, // contém classId, className, subject, weight etc.
+                                          data, 
                                     ),
                                   ),
                                 );
