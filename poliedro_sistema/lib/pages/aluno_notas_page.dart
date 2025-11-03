@@ -19,7 +19,6 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
   List<_ClassLite> _classes = [];
   bool _loading = true;
 
-  // aba atual (0..2) — usado no sheet
   int _tabIndex = 0;
 
   // mesmos pesos
@@ -79,9 +78,9 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
   }
 
  num _customRound(num v) {
-  // múltiplo de 0,5 mais próximo
+
   final r = (v * 2).round() / 2.0;
-  // garante 0..10
+
   if (r < 0) return 0;
   if (r > 10) return 10;
   return r;
@@ -110,9 +109,9 @@ num _snapHalf(num v) {
   }
 
   String _fmt(num v) {
-  final h = _snapHalf(v); // trava em 0,5 antes de mostrar
-  if (h % 1 == 0) return h.toStringAsFixed(0); // 7
-  return h.toStringAsFixed(1);                  // 7.5
+  final h = _snapHalf(v);
+  if (h % 1 == 0) return h.toStringAsFixed(0); 
+  return h.toStringAsFixed(1);                  
 }
 
 
@@ -172,7 +171,7 @@ num _snapHalf(num v) {
   preferredSize: const Size.fromHeight(56),
   child: Center(
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 900), // <<< largura máxima
+      constraints: const BoxConstraints(maxWidth: 900),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
         child: _Glass(
@@ -187,17 +186,15 @@ num _snapHalf(num v) {
               ),
             ),
             child: TabBar(
-  // não rolável = as 3 abas ocupam toda a largura disponível do container
+ 
   isScrollable: false,
   onTap: (i) => setState(() => _tabIndex = i),
 
   // um respiro nas bordas da barra
   padding: const EdgeInsets.symmetric(horizontal: 16),
 
-  // remove a divisória feia entre abas (Flutter 3.10+)
   dividerColor: Colors.transparent,
 
-  // deixa a “underline” mais elegante
   indicatorSize: TabBarIndicatorSize.tab,
   indicatorWeight: 2,
 
@@ -220,7 +217,6 @@ num _snapHalf(num v) {
         body: Stack(
           fit: StackFit.expand,
           children: [
-            // Fundo com gradiente + imagem
             Container(
               decoration: BoxDecoration(
                 image: const DecorationImage(
@@ -237,7 +233,7 @@ num _snapHalf(num v) {
                 ),
               ),
             ),
-            // Marca d’água
+            
             Center(
               child: IgnorePointer(
                 child: Opacity(
@@ -370,7 +366,6 @@ num _snapHalf(num v) {
     return ListView(
       padding: const EdgeInsets.all(10),
       children: [
-        // Atividades
         _Glass(
           radius: 18,
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -481,7 +476,6 @@ num _snapHalf(num v) {
                   final data = snap.data!.data() ?? {};
 
                   try {
-                    // Flatten
                     final kProvaOcc = 's_prova_t${termNum}_occ';
                     final kProvaCon = 's_prova_t${termNum}_cons';
                     final kTrabOcc = 's_trab_t${termNum}_occ';
@@ -492,7 +486,6 @@ num _snapHalf(num v) {
                     List<int> trabOcc = _asIntList(data[kTrabOcc]);
                     int? trabCon = _asIntOrNull(data[kTrabCon]);
 
-                    // Nested fallback
                     if (provaOcc.isEmpty && trabOcc.isEmpty) {
                       final sparse = (data['sparse'] is Map)
                           ? Map<String, dynamic>.from(data['sparse'])
@@ -777,7 +770,6 @@ class _SparseScaleFancyPainter extends CustomPainter {
     final end = Offset(size.width - 24, y);
     final span = end.dx - start.dx;
 
-    // linha base com gradiente + glow
     final shader = const LinearGradient(
       colors: [Color(0xFF6EA8FF), Color(0xFFB072FF)],
     ).createShader(Rect.fromPoints(start, end));
@@ -886,7 +878,6 @@ class _HistogramPainterFancy extends CustomPainter {
       final bar = Paint()..shader = shader;
       canvas.drawRRect(r, bar);
 
-      // label X
       final tp = TextPainter(
         text: const TextSpan(
           text: '',
