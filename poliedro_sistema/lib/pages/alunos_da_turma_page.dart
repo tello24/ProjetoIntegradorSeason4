@@ -1,5 +1,4 @@
 // lib/pages/alunos_da_turma_page.dart
-// COMPLETO — AppBar com pílula "Voltar" e diálogo com AUTOCOMPLETE de RA
 
 import 'dart:async';
 import 'dart:ui';
@@ -151,7 +150,6 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
   void _showAddStudentDialog() {
     final raController = TextEditingController();
 
-    // estado local do diálogo
     List<Map<String, dynamic>> suggestions = [];
     bool searching = false;
     Timer? debouncer;
@@ -162,12 +160,10 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
         final q = prefix.trim();
         if (q.isEmpty) {
           suggestions = [];
-          if (mounted) setState(() {}); // atualiza overlay de snackbar se precisar
+          if (mounted) setState(() {}); 
           return;
         }
-        // Range query: começa com prefixo
         try {
-          // Limita a 10 sugestões
           final snap = await _firestore
               .collection('users')
               .where('ra', isGreaterThanOrEqualTo: q)
@@ -186,7 +182,6 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
           suggestions = [];
         }
         searching = false;
-        // Usaremos o setState do StatefulBuilder abaixo
       });
     }
 
@@ -258,7 +253,7 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
                                   raController.selection =
                                       TextSelection.collapsed(
                                           offset: sRa.length);
-                                  setDlg(() {}); // atualiza campo
+                                  setDlg(() {});
                                 },
                               );
                             },
@@ -304,7 +299,7 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // remove seta padrão
+        automaticallyImplyLeading: false, 
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 140,
@@ -314,7 +309,7 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        // Sem título no AppBar — mostramos dentro do corpo
+
         title: null,
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -330,10 +325,8 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Espaço para não colidir com o AppBar
                 const SizedBox(height: kToolbarHeight - 8),
 
-                // Título dentro do corpo
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                   child: Text(
@@ -346,7 +339,6 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
                   ),
                 ),
 
-                // Lista / estados
                 Expanded(
                   child: _isLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -407,7 +399,7 @@ class _AlunosDaTurmaPageState extends State<AlunosDaTurmaPage> {
   }
 }
 
-/* ========================= UI Helpers ========================= */
+/* ========================= UI ========================= */
 
 class _Glass extends StatelessWidget {
   final Widget child;
@@ -459,7 +451,6 @@ class _Bg extends StatelessWidget {
   }
 }
 
-/// Botão "Voltar" estilo pílula
 class _BackPill extends StatelessWidget {
   final VoidCallback onTap;
   const _BackPill({required this.onTap});
