@@ -154,7 +154,7 @@ class _ColegasDaTurmaPageState extends State<ColegasDaTurmaPage> {
   }
 }
 
-// UI Helpers (copiados de outras páginas para manter a consistência visual)
+// UI Helpers 
 class _Glass extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
