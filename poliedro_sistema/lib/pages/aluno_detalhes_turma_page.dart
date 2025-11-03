@@ -137,22 +137,22 @@ class _ActionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _Glass(
       radius: 18,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // Padding vertical aumentado
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), 
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Row(
           children: [
             Container(
-              width: 50,  // Aumentado de 46 para 50
-              height: 50, // Aumentado de 46 para 50
+              width: 50, 
+              height: 50, 
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 gradient: const LinearGradient(
                   colors: [Color(0xFF3E5FBF), Color(0xFF7A45C8)],
                 ),
               ),
-              child: Icon(icon, color: Colors.white, size: 26), // Ícone levemente maior
+              child: Icon(icon, color: Colors.white, size: 26), 
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -165,7 +165,7 @@ class _ActionCard extends StatelessWidget {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
-                      fontSize: 17, // Aumentado de 16 para 17
+                      fontSize: 17, 
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -173,7 +173,7 @@ class _ActionCard extends StatelessWidget {
                     subtitle,
                     style: const TextStyle(
                       color: Colors.white70,
-                      fontSize: 13, // Aumentado de 12.5 para 13
+                      fontSize: 13, 
                     ),
                   ),
                 ],
