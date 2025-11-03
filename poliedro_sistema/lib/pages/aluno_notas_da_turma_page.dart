@@ -1,5 +1,4 @@
 // lib/pages/aluno_notas_da_turma_page.dart
-// CÓDIGO ATUALIZADO COM PADDINGS E MARGENS CORRIGIDOS
 
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -126,7 +125,7 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
     }
   }
 
-  // =================== Cálculos (copiados) ===================
+  // =================== Cálculos ===================
   num _avgAtividades(List<num> xs) => xs.isEmpty ? 0 : xs.reduce((a, b) => a + b) / xs.length;
 
   num _termAvg(_Term t) =>
@@ -238,7 +237,6 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
           fit: StackFit.expand,
           children: [
             const _Bg(),
-            // --- MODIFICAÇÃO DE PADDING E LAYOUT AQUI ---
             SafeArea(
               child: Center(
                 child: ConstrainedBox(
@@ -290,14 +288,14 @@ class _AlunoNotasDaTurmaPageState extends State<AlunoNotasDaTurmaPage> {
                 ),
               ),
             ),
-            // --- FIM DA MODIFICAÇÃO ---
+            
           ],
         ),
       ),
     );
   }
 
-  // ---------- Views (copiadas) ----------
+  // ---------- Views ----------
   Widget _buildTrimView(_Term t, _EntryView e) {
     final mTrim = _snapHalf(_termAvg(t));
     final mFinal = _finalRounded(e);

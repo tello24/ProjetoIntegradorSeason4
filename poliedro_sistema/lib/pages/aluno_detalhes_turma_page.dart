@@ -1,5 +1,4 @@
 // lib/pages/aluno_detalhes_turma_page.dart
-// CÓDIGO CORRIGIDO (onTap de Notas) E ESTILIZADO (Botões Maiores)
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -64,7 +63,6 @@ class AlunoDetalhesTurmaPage extends StatelessWidget {
                     title: 'Ver Atividades e Notas',
                     subtitle: 'Acompanhar avaliações da matéria',
                     
-                    // --- CORREÇÃO APLICADA AQUI ---
                     onTap: () {
                       Navigator.push(
                         context,
@@ -76,7 +74,6 @@ class AlunoDetalhesTurmaPage extends StatelessWidget {
                         ),
                       );
                     },
-                    // --- FIM DA CORREÇÃO ---
 
                   ),
                 ],

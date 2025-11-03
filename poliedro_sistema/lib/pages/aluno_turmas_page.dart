@@ -41,7 +41,6 @@ class _AlunoTurmasPageState extends State<AlunoTurmasPage> {
 
       if (ra != null && ra.isNotEmpty) {
         _studentRa = ra;
-        // MODIFICAÇÃO PRINCIPAL: A consulta agora busca na coleção 'classes'
         // onde o RA do aluno está no array 'studentRAs'.
         _turmasStream = FirebaseFirestore.instance
             .collection('classes')
@@ -185,7 +184,7 @@ class _AlunoTurmasPageState extends State<AlunoTurmasPage> {
   }
 }
 
-// ----- Widgets de UI (copiados para manter consistência) -----
+// ----- Widgets de UI -----
 class _Glass extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

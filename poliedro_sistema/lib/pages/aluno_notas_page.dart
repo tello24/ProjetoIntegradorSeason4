@@ -64,7 +64,7 @@ class _AlunoNotasPageState extends State<AlunoNotasPage> {
     });
   }
 
-  // =================== Cálculos (iguais ao professor) ===================
+  // =================== Cálculos ===================
 
   num _avgAtividades(List<num> xs) => xs.isEmpty ? 0 : xs.reduce((a, b) => a + b) / xs.length;
 
@@ -402,7 +402,7 @@ num _snapHalf(num v) {
 
         const SizedBox(height: 12),
 
-        // Métricas (centralizadas)
+        // Métricas
         Row(
           children: [
             Expanded(child: _MetricCard(title: 'Prova', value: _fmt(t.prova))),
@@ -675,7 +675,6 @@ class _EntryView {
       );
 }
 
-/* ===== ajuda p/ UI ===== */
 class _SectionTitle extends StatelessWidget {
   final String text;
   const _SectionTitle(this.text, {super.key});
@@ -741,7 +740,7 @@ class _GlassMessage extends StatelessWidget {
   }
 }
 
-/* ===== escala esparsa — versão “bonita” (igual ao prof) ===== */
+/* ===== escala esparsa  ===== */
 class _SparseScaleFancy extends StatelessWidget {
   final List<int> labels;
   final int? consensus;

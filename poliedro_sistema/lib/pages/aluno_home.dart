@@ -1,5 +1,4 @@
 // lib/pages/aluno_home.dart
-// CÓDIGO FINAL COM LAYOUT 2x2, BOTÕES MAIORES E ESPAÇAMENTO AJUSTADO
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -204,9 +203,7 @@ class _AlunoHomeState extends State<AlunoHome> {
                               ),
                             ),
                             
-                            // --- MODIFICAÇÃO DO ESPAÇAMENTO ---
                             const SizedBox(height: 40),
-                            // --- FIM DA MODIFICAÇÃO ---
                             
                             Row(
                               children: [
@@ -326,7 +323,6 @@ class _Glass extends StatelessWidget {
   }
 }
 
-// --- BOTÃO GRANDE (VERTICAL) ---
 class _HomeButton extends StatelessWidget {
   final String label;
   final IconData icon;
