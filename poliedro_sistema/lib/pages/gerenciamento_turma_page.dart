@@ -1,5 +1,4 @@
 // lib/pages/gerenciamento_turma_page.dart
-// COMPLETO — AppBar só com o botão "Voltar" (sem título)
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -11,7 +10,7 @@ import 'materiais_da_turma_page.dart';
 
 class GerenciamentoTurmaPage extends StatefulWidget {
   final String turmaId;
-  final String nomeTurma; // mantido caso você use em outros lugares da tela
+  final String nomeTurma; 
 
   const GerenciamentoTurmaPage({
     super.key,
@@ -27,7 +26,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
   int? _studentCount;
   int? _materialCount;
   bool _isLoadingSummary = true;
-  late final String _uid; // UID do professor logado
+  late final String _uid; 
 
   @override
   void initState() {
@@ -48,7 +47,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
       final materialSnapshot = await FirebaseFirestore.instance
           .collection('materials')
           .where('classIds', arrayContains: widget.turmaId)
-          .where('ownerUid', isEqualTo: _uid) // garante regra de leitura
+          .where('ownerUid', isEqualTo: _uid) 
           .count()
           .get();
 
@@ -75,7 +74,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // remove seta padrão
+        automaticallyImplyLeading: false, 
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 140,
@@ -85,7 +84,6 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
             child: _BackPill(onTap: () => Navigator.maybePop(context)),
           ),
         ),
-        // Sem título aqui! (removemos o nome da matéria da AppBar)
         title: null,
       ),
       body: Stack(
@@ -115,7 +113,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
                 children: [
                   const SizedBox(height: kToolbarHeight - 8),
 
-                  // Card de resumo — aqui mostramos o nome da turma no conteúdo (não no AppBar)
+                  // Card de resumo
                   _buildSummaryCard(),
 
                   const SizedBox(height: 24),
@@ -179,7 +177,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
           ),
           const SizedBox(height: 4),
           Text(
-            widget.nomeTurma, // título dentro do conteúdo
+            widget.nomeTurma, 
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -242,7 +240,7 @@ class _GerenciamentoTurmaPageState extends State<GerenciamentoTurmaPage> {
   }
 }
 
-/* ========================= UI Helpers ========================= */
+/* ========================= UI ========================= */
 
 class _Glass extends StatelessWidget {
   final Widget child;
@@ -360,7 +358,6 @@ class _ActionCard extends StatelessWidget {
   }
 }
 
-/// Botão "Voltar" estilo pílula (substitui a seta padrão do AppBar)
 class _BackPill extends StatelessWidget {
   final VoidCallback onTap;
   const _BackPill({required this.onTap});
