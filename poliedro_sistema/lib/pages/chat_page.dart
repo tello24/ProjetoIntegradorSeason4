@@ -52,7 +52,7 @@ class _ChatPageState extends State<ChatPage> {
       _myRa = (doc.data()?['ra'] ?? '').toString().trim();
       _messagesStream = _buildQuery().snapshots();
       if (mounted) setState(() {});
-      // marca como lidas após montar
+      
       WidgetsBinding.instance.addPostFrameCallback((_) => _markIncomingAsRead());
     });
   }
@@ -82,7 +82,7 @@ class _ChatPageState extends State<ChatPage> {
       Filter('toUid', isEqualTo: _myUid),
     ));
 
-    // por RA (se ambos tiverem RA)
+    // por RA 
     if ((_myRa != null && _myRa!.isNotEmpty) &&
         (widget.peerRa != null && widget.peerRa!.isNotEmpty)) {
       filters.add(Filter.and(
@@ -133,7 +133,7 @@ class _ChatPageState extends State<ChatPage> {
         });
       }
 
-      // Conversa por RA (se aplicável)
+      // Conversa por RA 
       if ((_myRa?.isNotEmpty ?? false) && (widget.peerRa?.isNotEmpty ?? false)) {
         final qRa = FirebaseFirestore.instance
             .collection('messages')
@@ -152,7 +152,6 @@ class _ChatPageState extends State<ChatPage> {
 
       await batch.commit();
     } catch (_) {
-      // silencioso
     }
   }
 
@@ -170,7 +169,7 @@ class _ChatPageState extends State<ChatPage> {
         'toRa': widget.peerRa,
         'text': text,
         'createdAt': FieldValue.serverTimestamp(),
-        'read': false, // 👈 flag de leitura
+        'read': false, 
       });
 
       _msgCtrl.clear();
@@ -339,7 +338,7 @@ class _ChatPageState extends State<ChatPage> {
                                 mine: mine,
                                 text: text,
                                 time: time,
-                                read: read, // 👈 novo
+                                read: read, 
                               ),
                             ),
                           ],
@@ -388,13 +387,13 @@ class _ChatPageState extends State<ChatPage> {
   }
 }
 
-/* ========================= UI helpers/pieces ========================= */
+/* ========================= UI ========================= */
 
 class _MessageBubble extends StatelessWidget {
   final bool mine;
   final String text;
   final String time;
-  final bool read; // 👈 novo
+  final bool read; 
   const _MessageBubble({
     required this.mine,
     required this.text,
