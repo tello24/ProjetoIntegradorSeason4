@@ -25,9 +25,8 @@ class _AlunoNotasMateriaPageState extends State<AlunoNotasMateriaPage> {
     _activityIdsFuture = _loadActivityIdsForClass(widget.classId);
   }
 
-  // Carrega IDs das atividades dessa turma (para filtrar notas mesmo que grade não tenha classId)
+  // Carrega IDs das atividades dessa turma
   Future<Set<String>> _loadActivityIdsForClass(String classId) async {
-    // ⚠️ Requer que o aluno possa ler activities da sua turma (ver patch das rules abaixo).
     final s = await FirebaseFirestore.instance
         .collection('activities')
         .where('classId', isEqualTo: classId)
