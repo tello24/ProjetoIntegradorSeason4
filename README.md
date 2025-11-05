@@ -1,10 +1,8 @@
-# 📱 Projeto Integrador - Season 4
----
+# 📱 Projeto Integrador — Season 4 (Flutter + Firebase)
 
-## 📌 Visão Geral
-Este repositório contém o desenvolvimento do **Projeto Integrador Season 4**, criado com foco em aplicar conceitos de **desenvolvimento mobile com Flutter/Dart** e integração com **Firebase** para autenticação, banco de dados e armazenamento.
+Repositório do **Projeto Integrador Season 4**, focado em **desenvolvimento mobile com Flutter/Dart** e integração com **Firebase** (Auth, Firestore e Storage).
 
-🔗 **Protótipo no Figma:** [Acessar Design](COLOCAR_LINK_AQUI)
+🔗 **Protótipo no Figma:** [Acessar Design](https://www.figma.com/proto/9247khau6R3LWDOmIrKxCG/Untitled?node-id=0-1&t=tys8IDuD5y6GX0V6-1)
 
 ---
 
@@ -20,32 +18,35 @@ Este repositório contém o desenvolvimento do **Projeto Integrador Season 4**, 
 
 ---
 
-## 🚀 Começando
+## 🧰 Stack & Principais Dependências
 
-### ✅ Pré-requisitos
-Antes de iniciar, você precisa ter instalado em sua máquina:
+- **Flutter** (3.x) + **Dart** (SDK `>= 3.9.0`)
+- **Firebase**: `firebase_core`, `firebase_auth`, `cloud_firestore`, `firebase_storage`
+- Utilitários: `file_picker`, `open_filex`, `path_provider`, `url_launcher`, `mime`
 
-* [Flutter SDK](https://docs.flutter.dev/get-started/install)  [![Flutter SDK](https://img.shields.io/badge/Flutter-SDK-02569B?logo=flutter\&logoColor=white)](https://docs.flutter.dev/get-started/install)
-* [Dart SDK](https://dart.dev/get-dart)  [![Dart SDK](https://img.shields.io/badge/Dart-SDK-0175C2?logo=dart\&logoColor=white)](https://dart.dev/get-dart)
-* [Firebase CLI](https://firebase.google.com/docs/cli)  [![Firebase CLI](https://img.shields.io/badge/Firebase-CLI-FFCA28?logo=firebase\&logoColor=black)](https://firebase.google.com/docs/cli)
-* [Git](https://git-scm.com/)  [![Git](https://img.shields.io/badge/Git-latest-F05032?logo=git\&logoColor=white)](https://git-scm.com/)
-* [Android Studio](https://developer.android.com/studio)  [![Android Studio](https://img.shields.io/badge/Android%20Studio-latest-3DDC84?logo=android-studio\&logoColor=white)](https://developer.android.com/studio)
-* [Java JDK 17](https://adoptium.net/)  [![Java JDK 17](https://img.shields.io/badge/Java-JDK%2017-007396?logo=openjdk\&logoColor=white)](https://adoptium.net/)
-* [FlutterFire CLI](https://firebase.flutter.dev/docs/cli/)  [![FlutterFire CLI](https://img.shields.io/badge/FlutterFire-CLI-FFCA28?logo=firebase\&logoColor=black)](https://firebase.flutter.dev/docs/cli/)
-* [Android SDK Platform-Tools](https://developer.android.com/tools/releases/platform-tools)  [![Android SDK Platform-Tools](https://img.shields.io/badge/Android%20SDK-Platform--Tools-3DDC84?logo=android\&logoColor=white)](https://developer.android.com/tools/releases/platform-tools)
-
-
+> **Versões (lockfile atual):**  
+> `firebase_core 4.0.0` · `firebase_auth 6.0.1` · `cloud_firestore 6.0.0` · `firebase_storage 13.0.0`  
+> `file_picker 10.3.2` · `open_filex 4.7.0` · `path_provider 2.1.5` · `url_launcher 6.3.2` · `cupertino_icons 1.0.8`
 
 ---
 
-### 📦 Instalação
+## 🚀 Começando
 
-Clone o repositório:
+### ✅ Pré-requisitos
+- [Flutter SDK](https://docs.flutter.dev/get-started/install)
+- [Dart SDK](https://dart.dev/get-dart)
+- [Java JDK 17](https://adoptium.net/)
+- [Android Studio](https://developer.android.com/studio) (SDK/Platform-Tools instalados)
+- [Git](https://git-scm.com/)
+- [Firebase CLI](https://firebase.google.com/docs/cli)
+- [FlutterFire CLI](https://firebase.flutter.dev/docs/cli/)
+
+### 📦 Instalação
 ```bash
 git clone https://github.com/tello24/ProjetoIntegradorSeason4.git
-cd ProjetoIntegradorSeason4
+cd ProjetoIntegradorSeason4/poliedro_sistema
 flutter pub get
-```
+
 ### ▶️ Executando o projeto
 flutter run
 
@@ -76,27 +77,56 @@ Se o Firebase não conectar: confira se o arquivo google-services.json (Android)
 Rode flutter clean e depois flutter pub get se ocorrerem erros de cache.
 
 ### 📁 Estrutura do Projeto
-ProjetoIntegradorSeason4/sistema_poliedro
-lib/
-  main.dart
-  firebase_options.dart
-  pages/
-    start_page.dart
-    login_page.dart
-    register_page.dart
-    prof_home.dart
-    aluno_home.dart
-    materials_page.dart
-    material_details.dart
-    classes_page.dart
-    select_student_page.dart
-    activities_page.dart
-    aluno_notas_page.dart
-    chat_page.dart
-  widgets/
-    unread_badge.dart         
-  utils/
-    open_inline_web.dart      
-    confirm_signout.dart
+poliedro_sistema/
+├─ lib/
+│  ├─ main.dart
+│  ├─ firebase_options.dart
+│  ├─ pages/
+│  │  ├─ start_page.dart
+│  │  ├─ login_page.dart
+│  │  ├─ register_page.dart
+│  │  ├─ prof_home.dart
+│  │  ├─ aluno_home.dart
+│  │  ├─ classes_page.dart
+│  │  ├─ materials_page.dart
+│  │  ├─ material_details.dart
+│  │  ├─ materiais_da_turma_page.dart
+│  │  ├─ chat_page.dart
+│  │  ├─ grades_page.dart
+│  │  ├─ aluno_turmas_page.dart
+│  │  ├─ aluno_notas_page.dart
+│  │  ├─ aluno_notas_materia_page.dart
+│  │  ├─ aluno_notas_da_turma_page.dart
+│  │  ├─ alunos_da_turma_page.dart
+│  │  ├─ aluno_detalhes_turma_page.dart
+│  │  ├─ colegas_da_turma_page.dart
+│  │  ├─ gerenciamento_turma_page.dart
+│  │  ├─ select_student_page.dart
+│  │  ├─ select_professor_page.dart
+│  │  └─ select_class_for_grades_page.dart
+│  ├─ utils/
+│  │  ├─ confirm_signout.dart
+│  │  ├─ open_inline_io.dart
+│  │  └─ open_inline_web.dart
+│  └─ widgets/
+│     └─ unread_badge.dart
+├─ assets/
+│  └─ images/
+│     ├─ poliedro.png
+│     ├─ iconePoliedro.png
+│     └─ fundoPoliedro.png
+├─ android/
+├─ ios/
+├─ web/
+├─ windows/
+├─ macos/
+├─ linux/
+├─ pubspec.yaml
+├─ pubspec.lock
+└─ analysis_options.yaml
+
+### 🗄️ Estrutura de Dados (Cloud Firestore)
+users, classes, students, students_index, materials,
+messages, grades, grade_entries, class_stats, activities
 
 
