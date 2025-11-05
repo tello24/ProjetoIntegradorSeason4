@@ -67,6 +67,7 @@ flutter run -d windows   # para Windows
 flutter run -d macos     # para macOS
 flutter run -d linux     # para Linux
 ```
+---
 
 ### 🛠️ Solução de Problemas
 
@@ -75,8 +76,16 @@ Caso não encontre o dispositivo: use flutter devices para verificar.
 Se o Firebase não conectar: confira se o arquivo google-services.json (Android) ou GoogleService-Info.plist (iOS) está adicionado corretamente.
 
 Rode flutter clean e depois flutter pub get se ocorrerem erros de cache.
+---
+
+### 🗄️ Estrutura de Dados (Cloud Firestore)
+users, classes, students, students_index, materials,
+messages, grades, grade_entries, class_stats, activities
+
+---
 
 ### 📁 Estrutura do Projeto
+```
 poliedro_sistema/
 ├─ lib/
 │  ├─ main.dart
@@ -124,9 +133,4 @@ poliedro_sistema/
 ├─ pubspec.yaml
 ├─ pubspec.lock
 └─ analysis_options.yaml
-
-### 🗄️ Estrutura de Dados (Cloud Firestore)
-users, classes, students, students_index, materials,
-messages, grades, grade_entries, class_stats, activities
-
-
+```
