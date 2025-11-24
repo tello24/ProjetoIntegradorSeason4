@@ -367,7 +367,7 @@ class _LoginPageState extends State<LoginPage> {
                           keyboardType: TextInputType.emailAddress,
                           textInputAction: TextInputAction.next,
                           decoration: _dec(
-                            hint: 'seu nome',
+                            hint: 'Seu nome',
                             errorText: emailError,
                             prefixIcon: const Icon(Icons.email_outlined, color: Colors.white70),
                             suffixText: _domainForRole, // mostra o @ fixo
